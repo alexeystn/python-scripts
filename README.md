@@ -1,24 +1,24 @@
-# Python Study
+## Python Study
 
 Small useful Python scripts:
 
-* **flight_calendar**
+### flight_calendar
 
 Generates PNG image with calendar based on dates contained in XLS table.
 
-* **forum_parser**
+### forum_parser
 
 Logins to forum, downloads multiple pages with user list, parse them to CSV.
 
-* **image_fragments**
+### image_fragments
 
 Composes a comparison table with fixed fragments of several image. 
 
-* **max7456_converter**
+### max7456_converter
 
 Converter fonts for MAX7456 OSD from binary to image and back
 
-* **opentx_log_map**
+### opentx_log_map
 
 Reads OpenTX log with GPS coordinates, overlays it on a satellite map using Google Maps Static API
 
