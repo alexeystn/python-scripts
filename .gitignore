@@ -5,3 +5,6 @@ key.txt
 *.csv
 *__pycache__*
 *.jpg
+*.html
+users.txt
+params.txt
