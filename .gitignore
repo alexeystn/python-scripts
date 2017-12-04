@@ -1,3 +1,6 @@
 *.png
 *.mcm
 *.bmp
+key.txt
+*.csv
+*__pycache__*
