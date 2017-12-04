@@ -4,3 +4,4 @@
 key.txt
 *.csv
 *__pycache__*
+*.jpg
