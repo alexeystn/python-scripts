@@ -37,8 +37,8 @@ def path_from_log(log):
     for i in range(0, len(log['GPS'])):
         lat_lon = log['GPS'][i].split(' ')
         try:
-            lat = float(lat_lon[0])
-            lon = float(lat_lon[1])
+            lat = abs(float(lat_lon[0]))
+            lon = abs(float(lat_lon[1]))
         except:
             pass
         else:
