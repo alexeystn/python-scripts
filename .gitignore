@@ -8,3 +8,4 @@ key.txt
 *.html
 users.txt
 params.txt
+!font.bmp
