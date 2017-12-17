@@ -22,4 +22,6 @@ Converter fonts for MAX7456 OSD from binary to image and back
 
 Reads OpenTX log with GPS coordinates, overlays it on a satellite map using Google Maps Static API
 
+### osd_recognizer
 
+Reads numbers from raw DVR video
