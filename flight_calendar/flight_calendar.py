@@ -4,7 +4,7 @@ import calendar
 import xlrd
 
 # read dates from xlsx file
-rb = xlrd.open_workbook('../Batteries.xlsx')
+rb = xlrd.open_workbook('../../../Квадрокоптер/Batteries.xlsx')
 sheet = rb.sheet_by_index(0)
 d_1900_1970 = 25569 - 365 - 1
 

@@ -85,7 +85,7 @@ out = open('users.csv', 'w', encoding="cp1251")
 for i in range(1,479):
     if i % 10 == 0:
         print(i)
-    path = './users/users%03d.html' % i
+    path = './users_done__/users%03d.html' % i
     f = open(path, 'r', encoding="utf8")
     for s in f:
         parser.feed(s)
