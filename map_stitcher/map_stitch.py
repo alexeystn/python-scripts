@@ -7,12 +7,18 @@ from PIL import Image
 
 
 
+
+
+
+
+
 def filename(x, y, suffix):
     path = './images/'
     name = 'y{:02d}_x{:02d}'.format(y, x)
     if suffix != '':
         name += '_' + suffix
     return (path + name + '.png')
+
 
 
 def download_map(lat, lon, zoom, res, filename):
@@ -28,6 +34,13 @@ def download_map(lat, lon, zoom, res, filename):
     im = Image.open(BytesIO(response.content))
     im = im.convert("RGBA")
     im.save(filename);
+
+
+
+
+# https://static-maps.yandex.ru/1.x/?ll=37.620070,55.753630&size=450,450&z=15&l=map
+
+
 
 
 def convolve_2d(im0, im1): # 0 small, 1 large
@@ -48,10 +61,8 @@ def convolve_2d(im0, im1): # 0 small, 1 large
                         conv[y1,x1] += 1
 
             conv[y1, x1] /= num_white_pixels / (step**2)
-        # print(y1)
     x = conv.argmax() % w
     y = conv.argmax() // w
-    # print(conv.max())
     return (y, x)
 
 
@@ -77,9 +88,6 @@ def calculate_shift(img0, img1, possible_overlay, part_of_edge, tolerance):
         img1_x1 = round( img1.shape[1]*(possible_overlay) ) - 1
         img1_y0 = round( img1.shape[0]*( 0.5 - part_of_edge/2 ) )
         img1_y1 = round( img1.shape[0]*( 0.5 + part_of_edge/2 )) - 1        
-
-
-
 
     img0_part = img0[img0_y0:img0_y1, img0_x0:img0_x1]
     img1_part = img1[img1_y0:img1_y1, img1_x0:img1_x1]
