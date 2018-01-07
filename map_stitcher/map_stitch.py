@@ -6,48 +6,11 @@ from io import BytesIO
 from PIL import Image
 
 
-
-
-
-
-
-
-def filename(x, y, suffix):
-    path = './images/'
-    name = 'y{:02d}_x{:02d}'.format(y, x)
-    if suffix != '':
-        name += '_' + suffix
-    return (path + name + '.png')
-
-
-
-def download_map(lat, lon, zoom, res, filename):
-    f = open('key.txt')
-    key = f.readline()[:-1]
-    url = 'https://maps.googleapis.com/maps/api/staticmap?'
-    url += 'maptype=satellite'
-    url += '&center=' + str(lat) + ',' + str(lon)
-    url += '&zoom=' + str(zoom)
-    url += '&size=' + str(res) + 'x' + str(res)
-    url += '&key=' + key
-    response = requests.get(url)
-    im = Image.open(BytesIO(response.content))
-    im = im.convert("RGBA")
-    im.save(filename);
-
-
-
-
-# https://static-maps.yandex.ru/1.x/?ll=37.620070,55.753630&size=450,450&z=15&l=map
-
-
-
-
 def convolve_2d(im0, im1): # 0 small, 1 large
     num_white_pixels = 0
     for y0 in range(im0.shape[0]):
         for x0 in range(im0.shape[1]):
-            if im0[y0,x0]:
+            if im0[y0, x0]:
                 num_white_pixels += 1
     w = im1.shape[1] - im0.shape[1]
     h = im1.shape[0] - im0.shape[0]
@@ -55,138 +18,184 @@ def convolve_2d(im0, im1): # 0 small, 1 large
     step = 1;
     for y1 in range(h):
         for x1 in range(w):
-            for y0 in range(0,im0.shape[0],step):
-                for x0 in range(0,im0.shape[1],step):
-                    if im0[y0,x0] & im1[y0+y1,x0+x1]:
-                        conv[y1,x1] += 1
-
+            for y0 in range(0, im0.shape[0], step):
+                for x0 in range(0, im0.shape[1], step):
+                    if im0[y0, x0] & im1[y0 + y1, x0 + x1]:
+                        conv[y1, x1] += 1
             conv[y1, x1] /= num_white_pixels / (step**2)
     x = conv.argmax() % w
     y = conv.argmax() // w
     return (y, x)
 
 
+def download_map_fragment(p, lat, lon, x, y):
+    url =''
+    if p['provider'] == 'g': # google
+        f = open('key.txt')
+        key = f.readline()[:-1]
+        url += 'https://maps.googleapis.com/maps/api/staticmap?'
+        if p['type'] == 's': # satellite
+            url += 'maptype=satellite'
+        else: # map
+            url += 'maptype=map'       
+        url += '&center=' + str(lat) + ',' + str(lon)
+        url += '&zoom=' + str(p['zoom'])
+        url += '&size=' + str(p['res_x']) + 'x' + str(p['res_y'])
+        url += '&key=' + key
+    else: # yandex
+        url += 'https://static-maps.yandex.ru/1.x/?'
+        url += 'll=' + str(lon) + ',' + str(lat)
+        url += '&size=' + str(p['res_x']) + ',' + str(p['res_y'])
+        url += '&z=' + str(p['zoom'])
+        if p['type'] == 's': # satellite
+            url += '&l=sat'
+        else: # map
+            url += '&l=map' 
+    response = requests.get(url)
+    im = Image.open(BytesIO(response.content))
+    im = im.convert("RGBA")
+    filename = p['path'] + 'y{:02d}_x{:02d}'.format(y, x) + '.png'
+    im.save(filename)
 
 
-def calculate_shift(img0, img1, possible_overlay, part_of_edge, tolerance):
-    vertical = 1 
-    if vertical:
-        img0_y0 = round( img0.shape[0]*(1-possible_overlay + tolerance ) )
-        img0_y1 = round( img0.shape[0]*(1 - tolerance ) ) - 1
-        img0_x0 = round( img0.shape[1]*( 0.5 - part_of_edge/2 + tolerance ) )
-        img0_x1 = round( img0.shape[1]*( 0.5 + part_of_edge/2 - tolerance  ) ) - 1
-        img1_y0 = 0
-        img1_y1 = round( img1.shape[0]*(possible_overlay) ) - 1
-        img1_x0 = round( img1.shape[1]*( 0.5 - part_of_edge/2 ) )
-        img1_x1 = round( img1.shape[1]*( 0.5 + part_of_edge/2 )) - 1
-    else:
-        img0_x0 = round( img0.shape[1]*(1-possible_overlay + tolerance ) )
-        img0_x1 = round( img0.shape[1]*(1 - tolerance ) ) - 1
-        img0_y0 = round( img0.shape[0]*( 0.5 - part_of_edge/2 + tolerance ) )
-        img0_y1 = round( img0.shape[0]*( 0.5 + part_of_edge/2 - tolerance  ) ) - 1
-        img1_x0 = 0
-        img1_x1 = round( img1.shape[1]*(possible_overlay) ) - 1
-        img1_y0 = round( img1.shape[0]*( 0.5 - part_of_edge/2 ) )
-        img1_y1 = round( img1.shape[0]*( 0.5 + part_of_edge/2 )) - 1        
-
-    img0_part = img0[img0_y0:img0_y1, img0_x0:img0_x1]
-    img1_part = img1[img1_y0:img1_y1, img1_x0:img1_x1]
-
-    c = convolve_2d(img0_part, img1_part)
-
-    y_shift = img0_y0 - c[0] - img1_y0
-    x_shift = img0_x0 - c[1] - img1_x0
-    return(y_shift, x_shift)
+def download_map(p):
+    print('Download:')
+    step_deg_x = p['deg/pix_x'] * p['res_x'] * (1 - p['overlap_x'])
+    step_deg_y = p['deg/pix_y'] * p['res_y'] * (1 - p['overlap_y']) * math.cos(p['lat']/180*math.pi)
+    for y in range(p['steps_y']):
+        for x in range(p['steps_x']):
+            lon = p['lon'] + step_deg_x * (x - (p['steps_x'] - 1) / 2)
+            lat = p['lat'] - step_deg_y * (y - (p['steps_y'] - 1) / 2)           
+            download_map_fragment(p, lat, lon, x, y)
+            print('x {:02d}, y {:02d}'.format(x, y))
 
 
-def image_shift(file_left, file_right):
-
-    possible_overlay = 0.1
-    part_of_edge = 0.25 # horizontal
-    part_of_edge = 0.05 # vertical
-    tolerance = 0.01
-    img0 = cv2.imread(file_left, 0)
-    img1 = cv2.imread(file_right, 0)
+def relative_shift(p, filename0, filename1, direction):
+    img0 = cv2.imread(filename0, 0)
+    img1 = cv2.imread(filename1, 0)
     img0 = cv2.Canny(img0, 150, 200)
     img1 = cv2.Canny(img1, 150, 200)
-    # cv2.imwrite('edges.png', img1)
-    return calculate_shift(img0, img1, possible_overlay, part_of_edge, tolerance)
-    
-
-zoom = 16
-lat = 55.842922
-lon = 37.512847
-res = 640
-
-x_steps = 5
-y_steps = 5
-
-meters_per_pixel = 156543.03392 * math.cos(lat * math.pi / 180) / (2**zoom)
-degrees_per_pixel_lon = meters_per_pixel / 1000 / 111.11 / math.cos(lat * math.pi / 180)
-degrees_per_pixel_lat = meters_per_pixel / 1000 / 111.11
-lon_step = degrees_per_pixel_lon * res * 0.9
-lat_step = degrees_per_pixel_lat * res * 0.9
-
-
-if 0: # download map
-    for x in range(x_steps):
-        for y in range(y_steps):
-            download_map(lat-lat_step*y, lon+lon_step*x, zoom, res, filename(x, y, ''))
-            print(x, y)
-
-if 0: # stitch horizontally
-    x_pos = [0 for i in range(x_steps)]
-    y_pos = [0 for i in range(x_steps)]
-    y = 4
-    for xi in range(x_steps-1):
-        file_left = filename(xi, y, '')
-        file_right = filename(xi+1, y, '')
-        s = image_shift(file_left, file_right)
-        x_pos[xi+1] = x_pos[xi] + s[1]
-        y_pos[xi+1] = y_pos[xi] + s[0]
-    print(x_pos)
-    print(y_pos)        
-    width = max(x_pos) + res
-    height = max(y_pos) + res
-    stitched_image = numpy.zeros((height,width,3), numpy.uint8)
-    for xi in range(x_steps):
-        img = cv2.imread(filename(xi, y, ''))
-        stitched_image[y_pos[xi]:y_pos[xi]+img.shape[0], x_pos[xi]:x_pos[xi]+img.shape[1], :] = img
-    cv2.imwrite('./images/stitched_' + str(y) +'.png',stitched_image)    
+    tolerance = 0.01
+    if direction == 'v':
+        overlap = p['overlap_y']
+        part_of_edge = 0.25 / p['steps_x']
+    if direction == 'h':
+        overlap = p['overlap_x']
+        part_of_edge = 0.25
+    if direction == 'h':
+        img0_x0 = round(img0.shape[1] * (1 - overlap + tolerance) )
+        img0_x1 = round(img0.shape[1] * (1 - tolerance ) ) - 1
+        img0_y0 = round(img0.shape[0] * (0.5 - part_of_edge/2 + tolerance))
+        img0_y1 = round(img0.shape[0] * (0.5 + part_of_edge/2 - tolerance)) - 1
+        img1_x0 = 0
+        img1_x1 = round(img1.shape[1] * overlap) - 1
+        img1_y0 = round(img1.shape[0] * (0.5 - part_of_edge/2))
+        img1_y1 = round(img1.shape[0] * (0.5 + part_of_edge/2)) - 1
+    if direction == 'v':
+        img0_y0 = round(img0.shape[0] * (1 - overlap + tolerance))
+        img0_y1 = round(img0.shape[0] * (1 - tolerance)) - 1
+        img0_x0 = round(img0.shape[1] * ( 0.5 - part_of_edge/2 + tolerance))
+        img0_x1 = round(img0.shape[1] * ( 0.5 + part_of_edge/2 - tolerance)) - 1
+        img1_y0 = 0
+        img1_y1 = round(img1.shape[0] * overlap) - 1
+        img1_x0 = round(img1.shape[1] * (0.5 - part_of_edge/2))
+        img1_x1 = round(img1.shape[1] * (0.5 + part_of_edge/2)) - 1
+    img0_part = img0[img0_y0:img0_y1, img0_x0:img0_x1]
+    img1_part = img1[img1_y0:img1_y1, img1_x0:img1_x1]
+    c = convolve_2d(img0_part, img1_part)
+    shift_y = img0_y0 - c[0] - img1_y0
+    shift_x = img0_x0 - c[1] - img1_x0    
+    return(shift_y, shift_x)
 
 
-if 1: # stitch vertically
-    x_pos = [0 for i in range(y_steps)]
-    y_pos = [0 for i in range(y_steps)]
-    for yi in range(y_steps-1):
-        file_top = './images/stitched_' + str(yi) +'.png'
-        file_bottom = './images/stitched_' + str(yi+1) +'.png'
-        s = image_shift(file_top, file_bottom)
-        x_pos[yi+1] = x_pos[yi] + s[1]
-        y_pos[yi+1] = y_pos[yi] + s[0]
-        print(yi)
-    print(x_pos)
-    print(y_pos)
+def stitch_horizontal(p):
+    print('Stitch horizontal:')
+    pos_x = [0 for i in range(p['steps_x'])]
+    pos_y = [0 for i in range(p['steps_x'])]    
+    for yi in range(p['steps_y']):
+        print('Row ' + str(yi) + ':')
+        for xi in range(p['steps_x']-1):
+            filename0 = p['path'] + 'y{:02d}_x{:02d}'.format(yi, xi) + '.png'
+            filename1 = p['path'] + 'y{:02d}_x{:02d}'.format(yi, xi + 1) + '.png'
+            s = relative_shift(p, filename0, filename1, 'h')
+            pos_x[xi+1] = pos_x[xi] + s[1]
+            pos_y[xi+1] = pos_y[xi] + s[0]
+        print(pos_x)
+        print(pos_y)
+        width = max(pos_x) + p['res_x']
+        height = max(pos_y) + p['res_y']
+        stitched_image = numpy.zeros((height, width, 3), numpy.uint8)
+        for xi in range(p['steps_x']):
+            filename = p['path'] + 'y{:02d}_x{:02d}'.format(yi, xi) + '.png'
+            img = cv2.imread(filename)
+            stitched_image[pos_y[xi]:(pos_y[xi] + img.shape[0]), pos_x[xi]:(pos_x[xi] + img.shape[1]), :] = img
+        filename = p['path'] + 's{:02d}'.format(yi) + '.png'
+        cv2.imwrite(filename, stitched_image)     
 
 
-    img = cv2.imread('./images/stitched_0.png')
+def stitch_vertical(p):
+    print('Stitch vertical:')
+    pos_x = [0 for i in range(p['steps_y'])]
+    pos_y = [0 for i in range(p['steps_y'])]
+    for yi in range(p['steps_y'] - 1):
+        print('Rows ' + str(yi) + ' + ' +  str(yi))
+        filename0 = p['path'] + 's{:02d}'.format(yi) + '.png'
+        filename1 = p['path'] + 's{:02d}'.format(yi + 1) + '.png'
+        s = relative_shift(p, filename0, filename1, 'v')
+        pos_x[yi+1] = pos_x[yi] + s[1]
+        pos_y[yi+1] = pos_y[yi] + s[0]
+    print(pos_x)
+    print(pos_y)
+    filename = p['path'] + 's00' + '.png'
+    img = cv2.imread(filename)
+    width = max(pos_x) + img.shape[1]
+    height = max(pos_y) + img.shape[0]
+    stitched_image = numpy.zeros((height, width, 3), numpy.uint8)
+    for yi in range(p['steps_y']):
+        filename = p['path'] + 's{:02d}'.format(yi) + '.png'
+        img = cv2.imread(filename)
+        stitched_image[pos_y[yi]:(pos_y[yi] + img.shape[0]), pos_x[yi]:(pos_x[yi] + img.shape[1]), :] = img
+    filename = p['path'] + 'map' + '.png'
+    cv2.imwrite(filename, stitched_image) 
 
 
-    width = max(x_pos) + img.shape[1]
-    height = max(y_pos) + img.shape[0]
-    stitched_image = numpy.zeros((height,width,3), numpy.uint8)
-    for yi in range(y_steps):
-        img = cv2.imread('./images/stitched_' + str(yi) +'.png')
-        stitched_image[y_pos[yi]:y_pos[yi]+img.shape[0], x_pos[yi]:x_pos[yi]+img.shape[1], :] = img
-    cv2.imwrite('full.png',stitched_image)    
+def initialize(p):
+    p['path'] = './images/'
+    if (p['provider'] == 'y'):
+        p['res_x'] = 600
+        p['res_y'] = 450
+    elif (p['provider'] == 'g'): 
+        p['res_x'] = 640
+        p['res_y'] = 640
+    else:
+        print('Unknown provider')
+    if (p['type'] != 'm') & (p['type'] != 's'):
+        print('Unknown type')
+    p['deg/pix_x'] = 360 / 256 * (1 + 1/533) * 2**(-p['zoom'])
+    p['deg/pix_y'] = 360 / 256 * 2**(-p['zoom'])
+    p['overlap_x'] = 0.1
+    p['overlap_y'] = 0.1
+    return (p)
 
 
 
 
+p = {}
+p['provider'] = 'g'
+p['type'] = 's'
+p['lat'] = 55.753739
+p['lon'] = 37.619904
+p['zoom'] = 14
+p['steps_x'] = 9
+p['steps_y'] = 13
 
-
+p = initialize(p)
+download_map(p)
+stitch_horizontal(p)
+stitch_vertical(p)
 
 print('Done')
+
 
 
 
