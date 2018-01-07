@@ -4,7 +4,7 @@ import math
 import requests
 from io import BytesIO
 from PIL import Image
-
+import time
 
 def convolve_2d(im0, im1): # 0 small, 1 large
     num_white_pixels = 0
@@ -12,10 +12,10 @@ def convolve_2d(im0, im1): # 0 small, 1 large
         for x0 in range(im0.shape[1]):
             if im0[y0, x0]:
                 num_white_pixels += 1
-    w = im1.shape[1] - im0.shape[1]
-    h = im1.shape[0] - im0.shape[0]
+    w = im1.shape[1] - im0.shape[1] + 1
+    h = im1.shape[0] - im0.shape[0] + 1
     conv = numpy.zeros((h,w))
-    step = 1;
+    step = 3;
     for y1 in range(h):
         for x1 in range(w):
             for y0 in range(0, im0.shape[0], step):
@@ -71,41 +71,41 @@ def download_map(p):
 
 
 def relative_shift(p, filename0, filename1, direction):
+    t_min = p['threshold_min']
+    t_max = p['threshold_max']
     img0 = cv2.imread(filename0, 0)
     img1 = cv2.imread(filename1, 0)
-    img0 = cv2.Canny(img0, 150, 200)
-    img1 = cv2.Canny(img1, 150, 200)
-    tolerance = 0.01
-    if direction == 'v':
-        overlap = p['overlap_y']
-        part_of_edge = 0.25 / p['steps_x']
+    img0 = cv2.Canny(img0, t_min, t_max)
+    img1 = cv2.Canny(img1, t_min, t_max)
+    tolerance = p['tolerance']
     if direction == 'h':
         overlap = p['overlap_x']
-        part_of_edge = 0.25
-    if direction == 'h':
-        img0_x0 = round(img0.shape[1] * (1 - overlap + tolerance) )
-        img0_x1 = round(img0.shape[1] * (1 - tolerance ) ) - 1
-        img0_y0 = round(img0.shape[0] * (0.5 - part_of_edge/2 + tolerance))
-        img0_y1 = round(img0.shape[0] * (0.5 + part_of_edge/2 - tolerance)) - 1
+        part_of_edge = 1.0
+        img0_x0 = round(img0.shape[1] * (1 - overlap)) + tolerance
+        img0_x1 = round(img0.shape[1]) - tolerance
+        img0_y0 = round(img0.shape[0] * (0.5 - part_of_edge/2))
+        img0_y1 = round(img0.shape[0] * (0.5 + part_of_edge/2))
         img1_x0 = 0
         img1_x1 = round(img1.shape[1] * overlap) - 1
         img1_y0 = round(img1.shape[0] * (0.5 - part_of_edge/2))
-        img1_y1 = round(img1.shape[0] * (0.5 + part_of_edge/2)) - 1
+        img1_y1 = round(img1.shape[0] * (0.5 + part_of_edge/2))
     if direction == 'v':
-        img0_y0 = round(img0.shape[0] * (1 - overlap + tolerance))
-        img0_y1 = round(img0.shape[0] * (1 - tolerance)) - 1
-        img0_x0 = round(img0.shape[1] * ( 0.5 - part_of_edge/2 + tolerance))
-        img0_x1 = round(img0.shape[1] * ( 0.5 + part_of_edge/2 - tolerance)) - 1
+        overlap = p['overlap_y']
+        part_of_edge = 1.0
+        img0_y0 = round(img0.shape[0] * (1 - overlap)) + tolerance
+        img0_y1 = round(img0.shape[0]) - tolerance
+        img0_x0 = round(img0.shape[1] * ( 0.5 - part_of_edge/2))
+        img0_x1 = round(img0.shape[1] * ( 0.5 + part_of_edge/2))
         img1_y0 = 0
-        img1_y1 = round(img1.shape[0] * overlap) - 1
+        img1_y1 = round(img1.shape[0] * overlap)
         img1_x0 = round(img1.shape[1] * (0.5 - part_of_edge/2))
-        img1_x1 = round(img1.shape[1] * (0.5 + part_of_edge/2)) - 1
+        img1_x1 = round(img1.shape[1] * (0.5 + part_of_edge/2))
     img0_part = img0[img0_y0:img0_y1, img0_x0:img0_x1]
     img1_part = img1[img1_y0:img1_y1, img1_x0:img1_x1]
     c = convolve_2d(img0_part, img1_part)
     shift_y = img0_y0 - c[0] - img1_y0
     shift_x = img0_x0 - c[1] - img1_x0    
-    return(shift_y, shift_x)
+    return (shift_y, shift_x)
 
 
 def stitch_horizontal(p):
@@ -113,7 +113,7 @@ def stitch_horizontal(p):
     pos_x = [0 for i in range(p['steps_x'])]
     pos_y = [0 for i in range(p['steps_x'])]    
     for yi in range(p['steps_y']):
-        print('Row ' + str(yi) + ':')
+        print('Row ' + str(yi) + ':')           
         for xi in range(p['steps_x']-1):
             filename0 = p['path'] + 'y{:02d}_x{:02d}'.format(yi, xi) + '.png'
             filename1 = p['path'] + 'y{:02d}_x{:02d}'.format(yi, xi + 1) + '.png'
@@ -138,7 +138,7 @@ def stitch_vertical(p):
     pos_x = [0 for i in range(p['steps_y'])]
     pos_y = [0 for i in range(p['steps_y'])]
     for yi in range(p['steps_y'] - 1):
-        print('Rows ' + str(yi) + ' + ' +  str(yi))
+        print('Rows ' + str(yi) + ' + ' +  str(yi + 1))
         filename0 = p['path'] + 's{:02d}'.format(yi) + '.png'
         filename1 = p['path'] + 's{:02d}'.format(yi + 1) + '.png'
         s = relative_shift(p, filename0, filename1, 'v')
@@ -146,6 +146,8 @@ def stitch_vertical(p):
         pos_y[yi+1] = pos_y[yi] + s[0]
     print(pos_x)
     print(pos_y)
+    print(list(numpy.diff(pos_y)))
+    print('Save...')
     filename = p['path'] + 's00' + '.png'
     img = cv2.imread(filename)
     width = max(pos_x) + img.shape[1]
@@ -157,6 +159,16 @@ def stitch_vertical(p):
         stitched_image[pos_y[yi]:(pos_y[yi] + img.shape[0]), pos_x[yi]:(pos_x[yi] + img.shape[1]), :] = img
     filename = p['path'] + 'map' + '.png'
     cv2.imwrite(filename, stitched_image) 
+
+
+def edge_detection(p, x, y, n):
+    filename = p['path'] + 'y{:02d}_x{:02d}'.format(y, x) + '.png'
+    img = cv2.imread(filename, 0)
+    img = cv2.Canny(img, p['threshold_min'], p['threshold_max'])
+    cv2.imwrite('edge' + str(n) + '.png', img)
+    cv2.imshow('detection', img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
 def initialize(p):
@@ -175,26 +187,41 @@ def initialize(p):
     p['deg/pix_y'] = 360 / 256 * 2**(-p['zoom'])
     p['overlap_x'] = 0.1
     p['overlap_y'] = 0.1
+    p['tolerance'] = 5
+    p['threshold_min'] = 30
+    p['threshold_max'] = 40
     return (p)
 
 
-
-
 p = {}
-p['provider'] = 'g'
-p['type'] = 's'
+p['provider'] = 'y'
+p['type'] = 'm'
 p['lat'] = 55.753739
 p['lon'] = 37.619904
-p['zoom'] = 14
-p['steps_x'] = 9
-p['steps_y'] = 13
+p['zoom'] = 15
+p['steps_x'] = 10
+p['steps_y'] = 14
 
 p = initialize(p)
+
+start_time = time.time()
 download_map(p)
+download_time = time.time() - start_time
+
+start_time = time.time()
 stitch_horizontal(p)
 stitch_vertical(p)
+stitch_time = time.time() - start_time
+
+print('Download time:')
+print(download_time)
+print('Stitch time:')
+print(stitch_time)
 
 print('Done')
+
+
+
 
 
 
