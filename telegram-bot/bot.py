@@ -2,6 +2,7 @@ import requests
 from io import BytesIO
 import json
 from urllib.parse import quote
+from urllib.parse import urlencode
 from time import sleep
 
 
@@ -23,12 +24,13 @@ while True:
         client_id = result['message']['from']['id']
         client_name = result['message']['from']['username']
         client_text = result['message']['text']
-        text = 'from ' + client_name + ' received: ' + quote(client_text)
-        print(text) 
-        text = 'from ' + client_name + ' received: ' + client_text
-        url = url_base + '/sendMessage'
-        url += '?chat_id=' + str(client_id)
-        url += '&text=' + quote(text)
+        print('from ' + client_name + ' received: ', end='')
+        print(quote(client_text))
+        answer_text = 'You sent: ' + client_text
+        if client_text == '/results':
+            answer_text = 'Best laps:\nChip: 00:23.12\nDale: 00:24.47'
+        url = url_base + '/sendMessage?'
+        url += urlencode({'chat_id':client_id, 'text': answer_text})
         requests.get(url)
     sleep(0.25)
     print('.')
