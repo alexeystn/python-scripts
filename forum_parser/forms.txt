@@ -1,0 +1,48 @@
+Александр,Alexander,Aleksandr,Alexandr,Саша,Aleksander,Aлександр,Александр ,Алесандр,Адександр,Oleksandr,Саня
+Алексей,Alexey,Aleksey,Aleksei,Леха,Алексей ,Alexei
+Сергей,Sergey,Серёга,Сергей ,Sergej,Serg,Cергей,Sergei,Serega,Серега,Sergio
+Андрей,Andrey,Andrey,Андрей ,Andrew,Andrei,Andrej,Andrian
+Артем,Артём,Artem
+Владимир,Vladimir,Вова,Володя,Wladimir
+Владислав,Влад,Vlad,Vladislav
+Дмитрий,Дима,Dmitry,Dima,Dmitriy,Dmitryi,Дмитирий
+Роман,Roman,Рома
+Олег,Олег ,Oleg
+Иван,Ivan,Ваня
+Геннадий,Гена
+Юрий,Юра,Yury,Yuri
+Максим,Макс,Maksim,Max,Maxim
+Павел,Pavel,Паша,Pasha,Paul
+Антон,Anton,Антоха,Тоха
+Игорь,Igor
+Денис,Denis,Den
+Станислав,Стас,Stanislav,Stas,Слава,Slava
+Вадим,Vadim
+Евгений,Женя,Evgeniy,Evgeny,Жека,Евген,Eugene,Eugen
+Константин,Konstantin,Костя,Kostya
+Кирилл,Kirill
+Валерий,Валера,Valeriy,Valery
+Николай,Nikolay,Nik
+Борис,Boris
+Михаил,Mikhail,Michael,Mike,Миша,Mihail,Mihail
+Георгий,George,Жора
+Никита,Nikita
+Виктор,Viktor,Victor
+Илья,Ilya
+Виталий,Vitaliy,Виталик,Vitaly,Vitalii
+Василий,Vasiliy,Вася,Vasily
+Алекс,Alex,Aleks
+Данил,Даниил,Данила,Danil,Daniil
+Руслан,Ruslan
+Петр,Пётр,Petr,Peter
+Федор,Фёдор,Fedor
+Валентин,Valentin
+Вячеслав,Слава
+Семён,Семен
+Егор,Egor
+Леонид,Leonid
+Тарас,Taras
+Артур,Artur
+Альберт,Albert
+Анатолий,Толя
+Эдуард,Eduard
