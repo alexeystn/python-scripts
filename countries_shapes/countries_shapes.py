@@ -1,6 +1,7 @@
 import shapefile
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy import sin, cos, linspace, pi
 
 class Country_Database:
     shapes = []
@@ -17,52 +18,31 @@ class Country_Database:
         index = self.names.index(country_name)
         s = self.shapes[index]
         s.parts.append(len(s.points))
-        sh = []
-        for i in range(len(s.parts)-1):
-            p = s.points[ s.parts[i]:s.parts[i+1] ]
-            for j in range(len(p)):
-                p[j] = (p[j][0], p[j][1], 0)
-            sh.append(p)
+        sh = [ s.points[i1:i2] for i1, i2 in zip( s.parts[:-1], s.parts[1:])]
         return sh
 
-
 def generate_globe(step, resolution):
-    pi = np.pi
-    g = []
-    t = np.linspace(0, 2*pi, 50)
-    for lat in np.linspace(-pi/2, pi/2, 13):
-        x = np.sin(t)*np.cos(lat)
-        y = np.cos(t)*np.cos(lat)
-        z = [np.sin(lat) for i in t]
-        g.append(list(zip(x,y,z)))
-    for lon in np.linspace(-pi/2, pi/2, 13):
-        x = np.cos(t)*np.sin(lon)
-        y = np.cos(t)*np.cos(lon)
-        z = np.sin(t)
-        g.append(list(zip(x,y,z)))        
-    return g
+    t = linspace(0, 2*pi, 50)
+    latitudes = [zip(sin(t)*cos(lat), cos(t)*cos(lat), [sin(lat) for i in t])
+                 for lat in linspace(-pi/2, pi/2, 13)]
+    longitudes = [zip(cos(t)*sin(lon), cos(t)*cos(lon), sin(t))
+                  for lon in linspace(-pi/2, pi/2, 13)]       
+    return latitudes + longitudes
 
-    
-def plot_contour(contour):
+def plot_contour(contour, col):
     for cc in contour:
         pp = [[*p] for p in zip(*cc)]
-        plt.plot(pp[0], pp[2], linewidth = 0.3, color = 'k')    
+        plt.plot(pp[0], pp[2], linewidth = 0.3, color = col) 
+
+
+
+def rad(deg):
+    return deg*pi/180
 
 
 def country_to_globe(s):
-    g = []
-    pi = np.pi
-    for c in s:
-        for i in range(len(c)):
-            p = c[i]
-            lat = p[1]
-            lon = p[0]
-            x = np.sin(lon*pi/180)*np.cos(lat*pi/180)
-            y = np.cos(lon*pi/180)*np.cos(lat*pi/180)
-            z = np.sin(lat*pi/180)
-            p = (x, y, z)
-            c[i] = p 
-        g.append(c)
+    g = [[(sin(rad(p[0]))*cos(rad(p[1])), cos(rad(p[0]))*cos(rad(p[1])), sin(rad(p[1])))
+          for p in c] for c in s]
     return g
 
 
@@ -74,10 +54,12 @@ g = generate_globe(30, 50)
 
 
 plt.figure(figsize = (6,5.5))
-plot_contour(g)
-plot_contour(country_to_globe(c.get('Japan')))
-plot_contour(country_to_globe(c.get('United Kingdom')))
-plot_contour(country_to_globe(c.get('Brazil')))
+plot_contour(g,'k')
+plot_contour(country_to_globe(c.get('Japan')),'r')
+plot_contour(country_to_globe(c.get('United Kingdom')),'r')
+plot_contour(country_to_globe(c.get('Brazil')),'r')
+plot_contour(country_to_globe(c.get('South Africa')),'r')
+plot_contour(country_to_globe(c.get('Belarus')),'r')
 plt.show()
 
 
