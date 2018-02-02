@@ -12,3 +12,4 @@ params.txt
 token.txt
 countries_shapes/ne_110m_admin_0_countries
 countries_shapes/ne_50m_admin_0_countries
+*.gpx
