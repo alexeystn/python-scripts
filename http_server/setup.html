@@ -1,0 +1,101 @@
+<html>
+  <head>
+    <title>RaceTimer</title>
+    <link rel="stylesheet" href="styles.css">
+      <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+  </head>
+  <body>
+    
+  <form name="form1" action="/save">
+    <table style="font-size: 14px; padding-left: 1px;">
+      
+      <tr>
+        <td class="nomargin">
+          <input type="checkbox" name="p1"> Pilot 1:
+            <input style="width: 80px" name="name1">
+              </td>
+        <td class="nomargin">
+          <p><input type="radio" name="sensor1" value="vtx"> VTX:</p>
+            <p><input type="radio" name="sensor1" value="ir"> IR:</p>
+              </td>
+        <td class="nomargin">
+          <p><input style="width: 40px" name="vtx2"></p>
+            <p><input style="width: 40px" name="ir2"></p>
+              </td>
+      </tr>
+      
+      <tr>
+        <td class="nomargin">
+          <input type="checkbox" name="p1"> Pilot 2:
+            <input style="width: 80px" name="name2">
+              </td>
+        <td class="nomargin">
+          <p><input type="radio" name="sensor2" value="vtx"> VTX:</p>
+            <p><input type="radio" name="sensor2" value="ir"> IR:</p>
+              </td>
+        <td class="nomargin">
+          <p><input style="width: 40px" name="vtx2"></p>
+            <p><input style="width: 40px" name="ir2"></p>
+              </td>
+      </tr>
+
+  <tr>
+    <td colspan="2" align="center" id="status">
+      Status
+      </td>
+        <td>
+          <input type="Button" onclick="Save_Settings()" value="Save">
+          </td>
+      </tr>
+    </table>
+  </body>
+
+  <script>
+
+<!--
+
+  function Get_Status() {
+    var req = new XMLHttpRequest();
+    req.open("GET", "status", true);
+    req.onload = function() {
+      var str = req.responseText;
+      document.getElementById("status").innerHTML = str;
+    }
+    req.send(null);
+  }
+  
+  function Load_Settings() {
+    var req = new XMLHttpRequest();
+    req.open("GET", "load", false);
+    req.send(null);
+    var str = req.responseText.split(",");
+    console.log(str);
+
+    for (var i = 0; i < str.length; i++) {
+      var fld = str[i].split("=");
+      console.log(fld);
+      document.getElementsByName(fld[0])[0].value = fld[1];
+    }
+    document.getElementsByName("sensor1")[1].checked = true;
+
+    //document.form1.name1.value = str[0];
+    //document.form1.name2.value = str[1];
+    //document.getElementById("name1").value = str[0];
+    //document.getElementById("name2").value = str[1];
+  }
+  
+  function Save_Settings() {
+    //var n1 = document.getElementById("name1").value;
+    //var n2 = document.getElementById("name2").value;
+    //msg = "save=" + n1 + "," + n2;
+    //window.open(msg, "_self");
+    document.form1.submit();
+  }
+  
+  Load_Settings();
+  Get_Status();
+  window.onload = setInterval("Get_Status();", 1000);
+
+// -->
+  </script>
+</html>
