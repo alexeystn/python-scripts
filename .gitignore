@@ -15,3 +15,4 @@ countries_shapes/ne_50m_admin_0_countries
 forum_parser/*/*.html
 students_list/*.xlsx
 students_list/*.docx
+students.txt
