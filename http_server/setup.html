@@ -3,63 +3,96 @@
     <title>RaceTimer</title>
     <link rel="stylesheet" href="styles.css">
       <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+  
+  <style  type="text/css">
+    .field {
+      width: 60px;
+    }
+  </style>
   </head>
+  
   <body>
     
-  <form name="form1" action="/save">
-    <table style="font-size: 14px; padding-left: 1px;">
-      
-      <tr>
-        <td class="nomargin">
-          <input type="checkbox" name="p1"> Pilot 1:
-            <input style="width: 80px" name="name1">
-              </td>
-        <td class="nomargin">
-          <p><input type="radio" name="sensor1" value="vtx"> VTX:</p>
-            <p><input type="radio" name="sensor1" value="ir"> IR:</p>
-              </td>
-        <td class="nomargin">
-          <p><input style="width: 40px" name="vtx2"></p>
-            <p><input style="width: 40px" name="ir2"></p>
-              </td>
-      </tr>
-      
-      <tr>
-        <td class="nomargin">
-          <input type="checkbox" name="p1"> Pilot 2:
-            <input style="width: 80px" name="name2">
-              </td>
-        <td class="nomargin">
-          <p><input type="radio" name="sensor2" value="vtx"> VTX:</p>
-            <p><input type="radio" name="sensor2" value="ir"> IR:</p>
-              </td>
-        <td class="nomargin">
-          <p><input style="width: 40px" name="vtx2"></p>
-            <p><input style="width: 40px" name="ir2"></p>
-              </td>
-      </tr>
 
-  <tr>
-    <td colspan="2" align="center" id="status">
-      Status
-      </td>
-        <td>
-          <input type="Button" onclick="Save_Settings()" value="Save">
-          </td>
+    <table class="nomargin">
+
+      <form name="pilot1">
+      <tr><td>
+        <input type="checkbox" name="en"> Pilot 1:
+        <input class="field" name="name"/>
+      </td><td>
+        <p><input type="radio" name="sens" value="vtx"> VTX:</p>
+        <p><input type="radio" name="sens" value="ir"> IR:</p>
+      </td><td>
+        <p><input class="field" name="ch"></p>
+        <p><input class="field" name="id"></p>
+      </td><td>
+        <p><input class="field" name="thr"/></p>
+      </td></tr>
+      </form>
+      
+ 
+      <form name="pilot2">
+      <tr><td>
+        <input type="checkbox" name="en"> Pilot 2:
+        <input class="field" name="name"/>
+      </td><td>
+        <p><input type="radio" name="sens" value="vtx"> VTX:</p>
+        <p><input type="radio" name="sens" value="ir"> IR:</p>
+      </td><td>
+        <p><input class="field" name="ch"></p>
+        <p><input class="field" name="id"></p>
+      </td><td>
+        <p><input class="field" name="thr"/></p>
+      </td></tr>
+      </form>
+ 
+      <tr>
+        <td id="voltage"> 0 </td>
+        <td id="infrared"> 0 </td><td></td>
+        <td> <input type="Button" onclick="Save_Settings()" value="Save"></td>
       </tr>
+      
     </table>
   </body>
 
   <script>
 
 <!--
+  
+  function Save_Settings() {
+    var str = "save?";
+    for (var p = 1; p <= 2; p++) {
+      frm_name = "pilot" + p.toString();
+      str += frm_name + ",";
+      var frm = document[frm_name];
+      for (var i = 0; i < frm.length; i++) {
+        var par_name = frm[i].name;
+        var par_type = frm[i].type;
+        var par_value = frm[i].value;
+        if (par_type == "checkbox")
+          if (frm[i].checked) par_value = 1;
+          else par_value = 0;
+        if ((par_type == "radio") && (!frm[i].checked))
+          continue;
+        str += par_name + "=" + par_value + ",";
+      }
+      str = str.slice(0, -1);
+      str += "&";
+    }
+    str = str.slice(0, -1);
+    console.log(str);
+    window.open(str, "_self");
+  }
+
 
   function Get_Status() {
     var req = new XMLHttpRequest();
     req.open("GET", "status", true);
     req.onload = function() {
-      var str = req.responseText;
-      document.getElementById("status").innerHTML = str;
+      var str = req.responseText.split(",");
+      document.getElementById("voltage").innerHTML = str[0];
+      document.getElementById("infrared").innerHTML = str[1];
     }
     req.send(null);
   }
@@ -68,30 +101,22 @@
     var req = new XMLHttpRequest();
     req.open("GET", "load", false);
     req.send(null);
-    var str = req.responseText.split(",");
-    console.log(str);
-
-    for (var i = 0; i < str.length; i++) {
-      var fld = str[i].split("=");
-      console.log(fld);
-      document.getElementsByName(fld[0])[0].value = fld[1];
+    var resp = req.responseText;
+    pilots_list = resp.split("&");
+    for (var i = 0; i < pilots_list.length; i++) {
+      var params_list = pilots_list[i].split(",");
+      var frm = document[params_list[0]];
+      for (var j = 1; j < params_list.length; j++) {
+        var p = params_list[j].split("=");
+        var par_name = p[0];
+        var par_value = p[1];
+        frm[par_name].value = par_value;
+        if (frm[par_name].type == "checkbox")
+        frm[par_name].checked = (par_value != 0);
+      }
     }
-    document.getElementsByName("sensor1")[1].checked = true;
+  }
 
-    //document.form1.name1.value = str[0];
-    //document.form1.name2.value = str[1];
-    //document.getElementById("name1").value = str[0];
-    //document.getElementById("name2").value = str[1];
-  }
-  
-  function Save_Settings() {
-    //var n1 = document.getElementById("name1").value;
-    //var n2 = document.getElementById("name2").value;
-    //msg = "save=" + n1 + "," + n2;
-    //window.open(msg, "_self");
-    document.form1.submit();
-  }
-  
   Load_Settings();
   Get_Status();
   window.onload = setInterval("Get_Status();", 1000);

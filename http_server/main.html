@@ -3,7 +3,9 @@
 <script>
 <!--
   var update_id = 0;
-            
+  var pilot_names = ["", "", "", ""]      
+        
+        
   function AddRow(value) {
     var table = document.getElementById("Results");
     var row = table.insertRow(1);
@@ -15,18 +17,43 @@
     var req = new XMLHttpRequest();
     req.open("GET", "update=".concat(update_id.toString()), true);
     req.onload = function() {
+      console.log(req.responseText);
       var str = req.responseText.split(",");
       update_id_new = parseInt(str[0]);
       if (update_id_new != update_id) {
         update_id = update_id_new;
         for (var i = 1; i < str.length; i++) {
-          AddRow(str[i]);
+          var ev = str[i].split("-");
+          var s = pilot_names[ev[0]] + ": " + ev[2];
+          if (ev[1] != "0")
+            s = "<b>" + s + "</b>"
+          AddRow(s);
         }
       }
     }
     req.send(null);
   }
             
+  function Load_Names() {
+    var req = new XMLHttpRequest();
+    req.open("GET", "load", false);
+    req.send(null);
+    var resp = req.responseText;
+    pilots_list = resp.split("&");
+    for (var i = 0; i < pilots_list.length; i++) {
+      var params_list = pilots_list[i].split(",");
+      var pilot_number = parseInt(params_list[0].slice(-1)) - 1
+      for (var j = 1; j < params_list.length; j++) {
+        var p = params_list[j].split("=");
+        if (p[0] == "name")
+          pilot_names[pilot_number] = p[1];
+      }
+    }
+    console.log(pilot_names)
+  }  
+            
+  Load_Names();          
+          
   window.onload = setInterval("Refresh()", 1000);
             
 -->
