@@ -1,10 +1,11 @@
 from PIL import Image
 
-mcm_name = 'mwosd_default.mcm'
-bmp_name = '4.bmp'
+mcm_name = 'bold_w.mcm'
 bmp_name = mcm_name[:-4] + '.bmp'
 
-font2image = 1 # 0 - image2font, 1 - font2image
+font2image = 0 # 0 - image2font, 1 - font2image
+
+newline = '\r\n'
 
 if (font2image):
     img = Image.new('L', (16*(12+1) + 1, 16*(18+1) + 1), 64)
@@ -13,7 +14,7 @@ if (font2image):
 else:
     img = Image.open(bmp_name)
     font = open(mcm_name,'w')
-    font.write('MAX7456\n')
+    font.write('MAX7456' + newline)
 for cx in range(16):
     for cy in range(16):
         for y in range(18):
@@ -41,12 +42,12 @@ for cx in range(16):
                         else:
                             line = line + '01'
                 if (font2image == 0):
-                    font.write(line + '\n')
+                    font.write(line + newline)
         for i in range(10):        
             if (font2image): 
                 font.readline()
             else:
-                font.write('01010101\n')
+                font.write('01010101' + newline)
 if (font2image):    
     img.save(bmp_name)
 
