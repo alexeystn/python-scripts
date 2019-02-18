@@ -1,18 +1,55 @@
 <html>
-<head>
-<script>
-<!--
-  var update_id = 0;
-  var pilot_names = ["", "", "", ""]      
+  <head>    
+    <title>RaceTimer</title>
+    <link rel="stylesheet" href="styles.css">
+      <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
         
-        
-  function AddRow(value) {
-    var table = document.getElementById("Results");
-    var row = table.insertRow(1);
-    var cell = row.insertCell(0);
-    cell.innerHTML = value;
-  }
-            
+
+
+</head>
+  <body>
+    
+    <table id="BestResults">
+      <tr>
+        <td></td><td></td>
+      </tr>
+      <tr>
+        <td></td><td></td>
+      </tr>
+      <tr colspan="2">
+        <td><p align="center">
+          Reset
+        </p></td>
+      </tr>
+    </table>
+      
+    
+    
+    <table id="Results">
+      <tr>
+        <td colspan="2">
+          Results
+        </td>
+      </tr>
+    <table>
+  </body>
+  
+  
+  <script>
+    <!--
+    var update_id = 0;
+    var pilot_names = ["", "", "", ""]      
+    
+    
+    function AddRow(value0, value1) {
+      var table = document.getElementById("Results");
+      var row = table.insertRow(1);
+      var cell = row.insertCell(0);
+      cell.innerHTML = value0;
+      var cell = row.insertCell(1);
+      cell.innerHTML = value1;
+    }
+  
   function Refresh() {
     var req = new XMLHttpRequest();
     req.open("GET", "update=".concat(update_id.toString()), true);
@@ -20,20 +57,22 @@
       console.log(req.responseText);
       var str = req.responseText.split(",");
       update_id_new = parseInt(str[0]);
-      if (update_id_new != update_id) {
+      if ((update_id_new != update_id) && !(isNaN(update_id_new))){
         update_id = update_id_new;
         for (var i = 1; i < str.length; i++) {
           var ev = str[i].split("-");
-          var s = pilot_names[ev[0]] + ": " + ev[2];
-          if (ev[1] != "0")
-            s = "<b>" + s + "</b>"
-          AddRow(s);
+          ev[1] = pilot_names[ev[1]];
+          if (ev[0] != "0"){
+            ev[1] = "<font color=\"red\">" + ev[1] + "</font>"
+            ev[2] = "<font color=\"red\">" + ev[2] + "</font>"
+          };
+          AddRow(ev[1], ev[2]);
         }
       }
     }
     req.send(null);
   }
-            
+  
   function Load_Names() {
     var req = new XMLHttpRequest();
     req.open("GET", "load", false);
@@ -45,30 +84,27 @@
       var pilot_number = parseInt(params_list[0].slice(-1)) - 1
       for (var j = 1; j < params_list.length; j++) {
         var p = params_list[j].split("=");
-        if (p[0] == "name")
+        if (p[0] == "name") {
           pilot_names[pilot_number] = p[1];
+          document.getElementById("BestResults").rows[pilot_number].cells[0].innerHTML = p[1];
+        }
       }
     }
     console.log(pilot_names)
   }  
-            
+  
   Load_Names();          
-          
+  
   window.onload = setInterval("Refresh()", 1000);
-            
--->
-</script>
-
-</head>
-  <body>
-    <table id="Results">
-      <tr>
-        <td>
-          Results
-        </td>
-      </tr>
-    <table>
-  </body>
+  
+  
+  -->
+    </script>  
+  
+  
+  
+  
+  
 </html>
 
 
