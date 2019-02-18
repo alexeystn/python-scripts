@@ -28,9 +28,6 @@ for s in student_names:
         row = doc.tables[0].add_row()
         if i == 0:
             row.cells[0].text = s
-        
-        # f.write('\t' + entry + '\n')
-#f.close()
 
 
 doc.save(path)

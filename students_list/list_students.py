@@ -1,20 +1,11 @@
 from docx import Document
 import os
 
-
-def remove_row(table, row):
-    tbl = table._tbl
-    tr = row._tr
-    tbl.remove(tr)
-
-
-
 path = '/Users/imac/Русский язык/Отчёты о количестве учащихся/'
 
 files = os.listdir(path)
 
 students = {}
-
 
 for f in files:
     if f.endswith('docx') & (len(f) == 15):
@@ -51,37 +42,11 @@ for s in student_names:
         f.write(students[s][arrival_date][3] + '\t')  # school
         f.write(arrival_date)        
         f.write('\n')
-
 f.close()
 
 
-
-
-
-##path = 'output.docx'
-##doc = Document(path)
-##
-##table = doc.tables[0]
-##for i in reversed(range(1, len(table.rows))):
-##    row = doc.tables[0].rows[i]
-##    remove_row(table, row)
-##
-##for s in student_names:
-##    for i, arrival_date in enumerate(students[s].keys()):
-##        row = doc.tables[0].add_row()
-##        if i == 0:
-##            row.cells[0].text = s
-##        row.cells[1].text = students[s][arrival_date][0] # birth
-##        row.cells[2].text = students[s][arrival_date][1] # class
-##        row.cells[3].text = students[s][arrival_date][2] # city
-##        row.cells[4].text = students[s][arrival_date][3] # school
-##        row.cells[5].text = arrival_date
-##doc.save(path)
-
-
-
-
-
-
-
+# TODO:
+# remove extra spaces
+# register
+# sort by arrival
 
