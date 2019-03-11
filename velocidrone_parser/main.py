@@ -1,7 +1,33 @@
-from velociparser import *
+import velociparser
 import time
-import json
 
+'''
+velociparser.download_main_page()
+for url in velociparser.get_scenery_urls():
+    print(url)
+    velociparser.download_scenery_page(url)
+    time.sleep(0.5)
+for url in velociparser.get_track_urls():
+    print(url)
+    velociparser.download_track_page(url)
+    time.sleep(0.5)
+    
+'''
+
+#for f in velociparser.get_track_files_list():
+#    print(f)
+
+
+#result = velociparser.get_track_leaderboard('track_33_267.html')
+
+#js = json.dumps(result, sort_keys=True, indent=2)
+#f = open('dump.json', 'w')
+#f.write(js)
+#f.close()
+
+
+
+'''
 # download all
 if False:
     scenery_urls = get_scenery_urls(version = 14)
@@ -38,8 +64,7 @@ if True:
                     russian_pilots.add(entry['name'])
                 if entry['name'] == 'AlexeyStn':
                     print(' %-20s%-30s%8s'%(scenery, track, entry['time']))
-
-
+'''
 
 
 

@@ -1,66 +1,99 @@
+import os
 import requests
 from html.parser import HTMLParser
-from os import listdir
 
-def get_scenery_urls(version):
-    url_list = []
+
+def download_main_page():
     r = requests.get('http://www.velocidrone.com')
-    f = open('html/main.html', 'wb')
-    f.write(r.text.encode('utf-8'))
-    f.close()
-    substring = 'http://www.velocidrone.com/leaderboard_by_version'
-    for string in r.text.splitlines():
-        index_start = string.find(substring)
-        if index_start != -1:
-            index_stop = string.find('"', index_start)
-            url = string[index_start:index_stop]
-            if url.endswith(str(version)):
-                url_list.append(url)
-    return url_list
+    with open('./html/main.html', 'wb') as f:
+        f.write(r.text.encode('utf-8'))
 
-def get_track_urls(scenery_url):
+
+# Scenery URLs are stored in main page in following format:
+# <a href="http://www.velocidrone.com/leaderboard_by_version/XX/1.YY">
+
+def get_scenery_urls():
+    version = 14
     url_list = []
-    r = requests.get(scenery_url)
-    f = open('html/scenery_' + scenery_url.split(sep='/')[-2] +'.html', 'wb')
-    f.write(r.text.encode('utf-8'))
-    f.close()
-    substring = 'http://www.velocidrone.com/leaderboard/'
-    for string in r.text.splitlines():
-        index_start = string.find(substring)
-        if index_start != -1:
-            index_stop = string.find('"', index_start)
-            url = string[index_start:index_stop]
-            url_list.append(url)
+    substring = 'http://www.velocidrone.com/leaderboard_by_version'
+    with open('./html/main.html') as f:
+        for line in f:
+            index_start = line.find(substring)
+            if index_start != -1:
+                index_stop = line.find('"', index_start)
+                url = line[index_start:index_stop]
+                if url.endswith(str(version)):
+                    url_list.append(url)
     return url_list
 
-def download_track_table(track_url):
+
+def download_scenery_page(scenery_url):
+    scenery_id = scenery_url.split(sep='/')[-2]
+    r = requests.get(scenery_url)
+    with open('html/scenery_' + scenery_id + '.html', 'wb') as f:
+        f.write(r.text.encode('utf-8'))
+
+
+# Track leaderboards are stored in scenery pages in following format:
+# <a href="http://www.velocidrone.com/leaderboard/XX/YYY/1.ZZ">
+
+def get_track_urls():
+    url_list = []
+    substring = 'http://www.velocidrone.com/leaderboard/'
+    scenery_file_list = [f for f in os.listdir('./html') if f.startswith('scenery')]
+    for scenery_file in scenery_file_list:
+        with open('./html/' + scenery_file) as f:
+            for line in f:
+                index_start = line.find(substring)
+                if index_start != -1:
+                    index_stop = line.find('"', index_start)
+                    url = line[index_start:index_stop]
+                    url_list.append(url)
+    return url_list
+
+
+def download_track_page(track_url):
+    track_id = track_url.split(sep='/')[-3:-1]
     r = requests.get(track_url)
-    track_url = track_url.split(sep='/')
-    f = open('html/track_' + track_url[-3] + '_' + track_url[-2] + '.html', 'wb')
-    f.write(r.text.encode('utf-8'))
-    f.close()
+    with open('html/track_' + track_id[0] + '_' + track_id[1] + '.html', 'wb') as f:
+        f.write(r.text.encode('utf-8'))
+
+
+def get_track_files_list():
+    result = []
+    for filename in os.listdir('html'):
+        if filename.startswith('track_'):
+            result.append(filename)
+    return result
+
 
 class MyHTMLParser(HTMLParser):
+
     leaderboard = []
     entry = []
     cell_content = ''
+
     def handle_starttag(self, tag, attrs):
         if tag == "tr":
             self.entry = []
         if tag == "td":
             self.cell_content = ''
+
     def handle_endtag(self, tag):
         if tag == "tr":
-            if self.entry != []:
+            if self.entry:
                 e = self.entry[1:4]
-                self.leaderboard.append({'name':e[1], 'time':e[0], 'country':e[2]})
+                e[1] = e[1].replace('(', ' (')
+                self.leaderboard.append({'name': e[1], 'time': e[0], 'country': e[2]})
             self.entry = []
         if tag == "td":
             self.entry.append(self.cell_content)
+
     def handle_data(self, data):
         self.cell_content += data.strip()
 
-def parse_leaderboard(filename):
+
+def get_track_leaderboard(filename):
     result = {}
     parser = MyHTMLParser()
     parser.leaderboard = []
@@ -80,12 +113,3 @@ def parse_leaderboard(filename):
     f.close()
     result['leaderboard'] = parser.leaderboard
     return result
-
-def get_track_files():
-    result = []
-    for filename in listdir('html'):
-        if filename.startswith('track_'):
-            result.append(filename)
-    return result
-    
-

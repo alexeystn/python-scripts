@@ -16,3 +16,6 @@ forum_parser/*/*.html
 students_list/*.xlsx
 students_list/*.docx
 students.txt
+velocidrone_parser/html
+dump.json
+velocidrone_parser/.idea
