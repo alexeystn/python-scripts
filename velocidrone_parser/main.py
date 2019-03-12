@@ -1,70 +1,27 @@
 import velociparser
-import time
 
-'''
-velociparser.download_main_page()
-for url in velociparser.get_scenery_urls():
-    print(url)
-    velociparser.download_scenery_page(url)
-    time.sleep(0.5)
-for url in velociparser.get_track_urls():
-    print(url)
-    velociparser.download_track_page(url)
-    time.sleep(0.5)
-    
-'''
+# velociparser.download_all_leaderboards()
+# velociparser.parse_all_leaderboards_to_json()
 
-#for f in velociparser.get_track_files_list():
-#    print(f)
+js = velociparser.load_leaderboard_from_json()
 
+russian_pilots = set()
+countries = {}
 
-#result = velociparser.get_track_leaderboard('track_33_267.html')
+for scenery in js:
+    for track in js[scenery]:
+        for entry in js[scenery][track]:
 
-#js = json.dumps(result, sort_keys=True, indent=2)
-#f = open('dump.json', 'w')
-#f.write(js)
-#f.close()
+            if not entry['country'] in countries.keys():
+                countries[entry['country']] = set()
+            countries[entry['country']].add(entry['name'])
 
+            if entry['name'] == 'Eugy01':
+                print(' %-20s%-27s%8s%6s/%-2s%14s'%(scenery, track, entry['time'], entry['position'],
+                   len(js[scenery][track]), entry['date']))
 
+country_list = list(countries.keys())
+country_list.sort(key=lambda cnt: len(countries[cnt]), reverse=True)
 
-'''
-# download all
-if False:
-    scenery_urls = get_scenery_urls(version = 14)
-    for sc_url in scenery_urls:
-        track_urls = get_track_urls(sc_url)
-        for tr_url in track_urls:
-            download_track_table(tr_url)
-            print(tr_url)
-            time.sleep(0.5)
-
-# parse downloaded
-if False:
-    result = {}
-    for f in get_track_files():
-        p = parse_leaderboard(f)
-        if not p['scenery'] in result.keys():
-            result[p['scenery']] = {}
-        result[p['scenery']][p['track']] = p['leaderboard']
-    js = json.dumps(result, sort_keys=True, indent=2)
-    f = open('dump.json','w')
-    f.write(js)
-    f.close()
-
-# process dump
-if True:
-    with open('dump.json') as f:
-        js = json.load(f)
-
-    russian_pilots = set([])
-    for scenery in js:
-        for track in js[scenery]:
-            for entry in js[scenery][track]:
-                if entry['country'] == 'Russian Federation':
-                    russian_pilots.add(entry['name'])
-                if entry['name'] == 'AlexeyStn':
-                    print(' %-20s%-30s%8s'%(scenery, track, entry['time']))
-'''
-
-
-
+# for country in country_list:
+#     print('%20s: %d' % (country, len(countries[country])))
