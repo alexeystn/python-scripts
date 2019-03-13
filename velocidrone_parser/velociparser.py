@@ -4,6 +4,8 @@ import json
 import requests
 from html.parser import HTMLParser
 
+modes = ['lap1', 'lap3']
+
 
 def download_main_page():
     r = requests.get('http://www.velocidrone.com')
@@ -29,15 +31,18 @@ def get_scenery_urls():
     return url_list
 
 
-def download_scenery_page(scenery_url):
-    scenery_id = scenery_url.split(sep='/')[-2]
-    r = requests.get(scenery_url)
-    with open('html/scenery_' + scenery_id + '.html', 'wb') as f:
-        f.write(r.text.encode('utf-8'))
+def download_scenery_pages(urls):
+    for i, url in enumerate(urls):
+        print('{0}/{1} {2}'.format(i + 1, len(urls), url))
+        scenery_id = url.split(sep='/')[-2]
+        r = requests.get(url)
+        with open('html/scenery_' + scenery_id + '.html', 'wb') as f:
+            f.write(r.text.encode('utf-8'))
+        time.sleep(0.1)
 
 
 # Track leaderboards are stored in scenery pages in following format:
-# <a href="http://www.velocidrone.com/leaderboard/XX/YYY/1.ZZ">
+# <a href="http://www.velocidrone.com/leaderboard/XX/YYY/Z.ZZ">
 
 def get_track_urls():
     url_list = []
@@ -54,20 +59,38 @@ def get_track_urls():
     return url_list
 
 
-def download_track_page(track_url):
-    track_id = track_url.split(sep='/')[-3:-1]
-    r = requests.get(track_url)
-    with open('html/track_' + track_id[0] + '_' + track_id[1] + '.html', 'wb') as f:
-        f.write(r.text.encode('utf-8'))
+# In order to choose 'Single' of '3 Lap' mode 'set_race_mode' request
+# should be sent to server in current session
+
+def download_track_pages(urls, mode):
+    s = requests.session()
+    if mode == 'lap1':
+        s.get('https://www.velocidrone.com/set_race_mode/3')
+    elif mode == 'lap3':
+        s.get('https://www.velocidrone.com/set_race_mode/6')
+    else:
+        print('Unknown mode')
+        return
+    for i, url in enumerate(urls):
+        print('{0}/{1} {2}'.format(i + 1, len(urls), url))
+        track_id = url.split(sep='/')[-3:-1]
+        r = s.get(url)
+        with open('html/track_' + track_id[0] + '_' + track_id[1] + '_' + mode + '.html', 'wb') as f:
+            f.write(r.text.encode('utf-8'))
+        time.sleep(0.1)
+    s.close()
 
 
-def get_track_files_list():
+def get_track_files_list(mode):
     result = []
     for filename in os.listdir('html'):
-        if filename.startswith('track_'):
+        if filename.startswith('track_') and (mode in filename):
             result.append(filename)
     return result
 
+
+# Best times are located in table rows enclosed in <tr><td> tags in following format:
+#   Pos | Time | Name | Country | Rank | Model | Date | Version
 
 class MyHTMLParser(HTMLParser):
 
@@ -94,6 +117,9 @@ class MyHTMLParser(HTMLParser):
     def handle_data(self, data):
         self.cell_content += data.strip()
 
+
+# Track name is located between <h3 class=""> and <span class="small_link"> tags
+# Location name is enclosed by <h2></h2>
 
 def get_track_leaderboard(filename):
     result = {}
@@ -123,32 +149,36 @@ def get_track_leaderboard(filename):
 def download_all_leaderboards():
     download_main_page()
     scenery_urls = get_scenery_urls()
-    for i, url in enumerate(scenery_urls):
-        print('{0}/{1} {2}'.format(i + 1, len(scenery_urls), url))
-        download_scenery_page(url)
-        time.sleep(0.1)
+    download_scenery_pages(scenery_urls)
     track_urls = get_track_urls()
-    for i, url in enumerate(track_urls):
-        print('{0}/{1} {2}'.format(i + 1, len(track_urls), url))
-        download_track_page(url)
-        time.sleep(0.1)
+    for m in modes:
+        download_track_pages(track_urls, m)
 
 
 def parse_all_leaderboards_to_json():
-    result = {}
-    track_files_list = get_track_files_list()
-    for i, track in enumerate(track_files_list):
-        print('{0}/{1} {2}'.format(i + 1, len(track_files_list), track))
-        p = get_track_leaderboard(track)
-        if not p['scenery'] in result.keys():
-            result[p['scenery']] = {}
-        result[p['scenery']][p['track']] = p['leaderboard']
-    js = json.dumps(result, sort_keys=True, indent=2)
-    with open('dump.json','w') as f:
-        f.write(js)
+    for m in modes:
+        result = {}
+        track_files_list = get_track_files_list(m)
+        for i, track in enumerate(track_files_list):
+            print('{0}/{1} {2}'.format(i + 1, len(track_files_list), track))
+            p = get_track_leaderboard(track)
+
+            for j, entry in enumerate(p['leaderboard']):
+                p['leaderboard'][j]['position'] = entry['position'] + '/' + str(len(p['leaderboard']))
+                # {'name': e[2], 'country': e[3], 'time': e[1], 'position': e[0], 'date': e[6]}
 
 
-def load_leaderboard_from_json():
-    with open('dump.json') as f:
-        js = json.load(f)
+            if not p['scenery'] in result.keys():
+                result[p['scenery']] = {}
+            result[p['scenery']][p['track']] = p['leaderboard']
+        js = json.dumps(result, sort_keys=True, indent=2)
+        with open('dump_' + m + '.json','w') as f:
+            f.write(js)
+
+
+def load_leaderboards_from_json():
+    js = {}
+    for m in modes:
+        with open('dump_' + m + '.json') as f:
+            js[m] = json.load(f)
     return js
