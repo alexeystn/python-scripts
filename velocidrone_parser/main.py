@@ -28,10 +28,12 @@ for mode in js:
                 if not entry['name'] in tracks_by_pilots:
                     tracks_by_pilots[entry['name']] = {'country': entry['country'], 'results': []}
                 tracks_by_pilots[entry['name']]['results'].append(
-                    {'track': full_track_name, 'mode': mode, 'time': entry['time'], 'position': entry['position']})
+                    {'track': full_track_name, 'mode': mode, 'time': entry['time'], 'date': entry['date'],
+                     'position': entry['position'] + '/' + str(len(js[mode][scenery][track]))}
+                )
 
 # Track leaderboard
-if 1:
+if 0:
     scenery = 'Football Stadium'
     track = 'Split-S'
     mode = 'lap1'
@@ -46,7 +48,7 @@ if 0:
         print(mode[-1] + ' laps:')
         for tr in tracks_by_pilots[name]['results']:
             if tr['mode'] == mode:
-                print('%50s%10s%10s' % (tr['track'], tr['time'], tr['position']))
+                print('%50s%10s%10s%14s' % (tr['track'], tr['time'], tr['position'], tr['date']))
 
 # Most popular tracks
 if 0:

@@ -162,12 +162,6 @@ def parse_all_leaderboards_to_json():
         for i, track in enumerate(track_files_list):
             print('{0}/{1} {2}'.format(i + 1, len(track_files_list), track))
             p = get_track_leaderboard(track)
-
-            for j, entry in enumerate(p['leaderboard']):
-                p['leaderboard'][j]['position'] = entry['position'] + '/' + str(len(p['leaderboard']))
-                # {'name': e[2], 'country': e[3], 'time': e[1], 'position': e[0], 'date': e[6]}
-
-
             if not p['scenery'] in result.keys():
                 result[p['scenery']] = {}
             result[p['scenery']][p['track']] = p['leaderboard']
