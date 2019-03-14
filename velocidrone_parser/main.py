@@ -42,7 +42,7 @@ if 0:
         print('%6s%10s   %-20s%-20s' % (entry['position'], entry['time'], entry['name'], entry['country']))
 
 # Pilot personal results
-if 0:
+if 1:
     name = 'AlexeyStn'
     for mode in js:
         print(mode[-1] + ' laps:')
