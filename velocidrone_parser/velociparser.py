@@ -23,7 +23,7 @@ def download_main_page():
 def get_scenery_urls():
     version = 14
     url_list = []
-    substring = 'http://www.velocidrone.com/leaderboard_by_version'
+    substring = 'https://www.velocidrone.com/leaderboard_by_version'
     with open('./html/main.html') as f:
         for line in f:
             index_start = line.find(substring)
@@ -50,7 +50,7 @@ def download_scenery_pages(urls):
 
 def get_track_urls():
     url_list = []
-    substring = 'http://www.velocidrone.com/leaderboard/'
+    substring = 'https://www.velocidrone.com/leaderboard/'
     scenery_file_list = [f for f in os.listdir('./html') if f.startswith('scenery')]
     for scenery_file in scenery_file_list:
         with open('./html/' + scenery_file) as f:
