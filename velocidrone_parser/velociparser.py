@@ -146,13 +146,17 @@ def get_track_leaderboard(filename):
     return result
 
 
-def download_all_leaderboards():
-    download_main_page()
-    scenery_urls = get_scenery_urls()
-    download_scenery_pages(scenery_urls)
+def download_all_leaderboards(refresh_tracks=False):
+    time_start = time.time()
+    if refresh_tracks:
+        download_main_page()
+        scenery_urls = get_scenery_urls()
+        download_scenery_pages(scenery_urls)
     track_urls = get_track_urls()
     for m in modes:
         download_track_pages(track_urls, m)
+    time_stop = time.time()
+    print('Leaderboard downloaded in %.1f sec' % (time_stop - time_start))
 
 
 def parse_all_leaderboards_to_json():
