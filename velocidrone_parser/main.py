@@ -1,7 +1,7 @@
 import velociparser
 
-velociparser.download_all_leaderboards(refresh_tracks=False)
-# velociparser.parse_all_leaderboards_to_json()
+velociparser.download_all_leaderboards(refresh_tracks=True)
+velociparser.parse_all_leaderboards_to_json()
 
 js = velociparser.load_leaderboards_from_json()
 

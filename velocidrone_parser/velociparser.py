@@ -2,9 +2,13 @@ import os
 import time
 import json
 import requests
+import threading
 from html.parser import HTMLParser
 
 modes = ['lap1', 'lap3']
+mutex = threading.Lock()
+download_counter = 0
+download_counter_max = 0
 
 
 def download_main_page():
@@ -62,7 +66,9 @@ def get_track_urls():
 # In order to choose 'Single' of '3 Lap' mode 'set_race_mode' request
 # should be sent to server in current session
 
-def download_track_pages(urls, mode):
+def download_track_pages_thread(urls, thread_num, mode):
+    global download_counter
+    global download_counter_max
     s = requests.session()
     if mode == 'lap1':
         s.get('https://www.velocidrone.com/set_race_mode/3')
@@ -72,13 +78,41 @@ def download_track_pages(urls, mode):
         print('Unknown mode')
         return
     for i, url in enumerate(urls):
-        print('{0}/{1} {2}'.format(i + 1, len(urls), url))
-        track_id = url.split(sep='/')[-3:-1]
+        mutex.acquire()
+        download_counter += 1
+        print('{0}/{1} {2}'.format(download_counter, download_counter_max, url))
+        mutex.release()
         r = s.get(url)
+        while len(r.text) < 10e3:  # retry if answer is too low
+            time.sleep(1)
+            r = s.get(url)
+            print('Retry: %s' % url)  # tod3o:
+        track_id = url.split(sep='/')[-3:-1]
         with open('html/track_' + track_id[0] + '_' + track_id[1] + '_' + mode + '.html', 'wb') as f:
             f.write(r.text.encode('utf-8'))
         time.sleep(0.1)
     s.close()
+
+
+# Divide URLs list in N parts and download them in parallel threads
+
+def download_track_pages(urls, mode):
+    global download_counter
+    global download_counter_max
+    download_counter = 0
+    download_counter_max = len(urls)
+    number_of_threads = 4  # 4 is optimum
+    number_of_urls_per_thread = len(urls) // number_of_threads
+    if len(urls) % number_of_threads:
+        number_of_urls_per_thread += 1
+    urls_grouped = [[] for i in range(number_of_threads)]
+    for i, url in enumerate(urls):
+        urls_grouped[int(i // number_of_urls_per_thread)].append(urls[i])
+    threads = [threading.Thread(target=download_track_pages_thread, args=(urls_grouped[i], i, mode)) for i in range(number_of_threads)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
 
 
 def get_track_files_list(mode):
