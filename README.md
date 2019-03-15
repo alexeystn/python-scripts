@@ -1,4 +1,4 @@
-## Python Study
+## Python Scripts
 
 Small useful Python scripts:
 
