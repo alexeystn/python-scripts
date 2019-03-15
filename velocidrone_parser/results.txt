@@ -1,0 +1,69 @@
+Pilots by countries, starting from v1.11:
+
+       United States: 659
+             Germany: 345
+      United Kingdom: 170
+             Unknown: 130
+              Canada: 101
+              France: 83
+  Russian Federation: 75
+               Spain: 70
+              Sweden: 65
+         Switzerland: 61
+           Australia: 60
+              Poland: 54
+         Netherlands: 54
+              Norway: 50
+             Austria: 46
+      Czech Republic: 44
+               Korea: 32
+             Denmark: 27
+               Japan: 26
+         New Zealand: 22
+               Italy: 21
+              Brazil: 21
+             Finland: 18
+             Ukraine: 18
+            Portugal: 17
+             Belgium: 15
+            Colombia: 13
+              Latvia: 13
+             Ireland: 12
+             Hungary: 10
+              Israel: 10
+           Argentina: 9
+            Slovenia: 9
+              Mexico: 8
+           Singapore: 8
+           Indonesia: 8
+           Hong Kong: 8
+            Slovakia: 8
+         Philippines: 7
+          Luxembourg: 7
+              Turkey: 6
+           Lithuania: 6
+             Croatia: 5
+             Estonia: 4
+             Belarus: 4
+              Greece: 3
+            Bulgaria: 3
+            Malaysia: 3
+        South Africa: 3
+       Liechtenstein: 2
+              Taiwan: 2
+               Chile: 2
+  Dominican Republic: 2
+             Reunion: 2
+             Romania: 2
+            Honduras: 2
+              Serbia: 2
+           Guatemala: 2
+United Arab Emirates: 1
+               India: 1
+             Georgia: 1
+          Costa Rica: 1
+             Nigeria: 1
+Turks and Caicos Isl: 1
+               China: 1
+------------------------------
+               Total: 2476
