@@ -214,3 +214,8 @@ def load_leaderboards_from_json():
         with open('dump_' + m + '.json') as f:
             js[m] = json.load(f)
     return js
+
+
+def date_hash(date_string):
+    date = [int(d) for d in date_string.split(sep='/')]
+    return date[0] + date[1]*31 * date[2]*31*12

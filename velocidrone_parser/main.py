@@ -26,11 +26,13 @@ for mode in js:
                 pilots_by_countries[entry['country']].add(entry['name'])
 
                 if not entry['name'] in tracks_by_pilots:
-                    tracks_by_pilots[entry['name']] = {'country': entry['country'], 'results': []}
+                    tracks_by_pilots[entry['name']] = {'country': entry['country'], 'results': [], 'latest': '0/0/0'}
                 tracks_by_pilots[entry['name']]['results'].append(
                     {'track': full_track_name, 'mode': mode, 'time': entry['time'], 'date': entry['date'],
                      'position': entry['position'] + '/' + str(len(js[mode][scenery][track]))}
                 )
+                if velociparser.date_hash(entry['date']) > velociparser.date_hash(tracks_by_pilots[entry['name']]['latest']):
+                    tracks_by_pilots[entry['name']]['latest'] = entry['date']
 
 # Track leaderboard
 if 0:
@@ -44,11 +46,11 @@ if 0:
 # Pilot personal results
 if 1:
     name = 'AlexeyStn'
-    for mode in js:
-        print(mode[-1] + ' laps:')
-        for tr in tracks_by_pilots[name]['results']:
-            if tr['mode'] == mode:
-                print('%50s%10s%10s%14s' % (tr['track'], tr['time'], tr['position'], tr['date']))
+    (tracks_by_pilots[name]['results']).sort(key=lambda result: velociparser.date_hash(result['date']), reverse=True)
+
+    for tr in tracks_by_pilots[name]['results']:
+        print('%50s%10s%10s%14s%6s' % (tr['track'], tr['time'], tr['position'], tr['date'],
+                                        'x 3' if tr['mode'] == 'lap3' else ''))
 
 # Most popular tracks
 if 0:
