@@ -180,13 +180,15 @@ def get_track_leaderboard(filename):
     return result
 
 
-def download_all_leaderboards(refresh_tracks=False):
+def download_all_leaderboards(refresh_tracks=False, override_version=False):
     time_start = time.time()
     if refresh_tracks:
         download_main_page()
         scenery_urls = get_scenery_urls()
         download_scenery_pages(scenery_urls)
     track_urls = get_track_urls()
+    if override_version:
+        track_urls = [str.replace(url, '1.14', '1.' + str(override_version) ) for url in track_urls]
     for m in modes:
         download_track_pages(track_urls, m)
     time_stop = time.time()
@@ -214,3 +216,19 @@ def load_leaderboards_from_json():
         with open('dump_' + m + '.json') as f:
             js[m] = json.load(f)
     return js
+
+
+def load_leaderboards_from_json_by_versions(versions):
+    js_full = {}
+    for v in versions:
+        js = {}
+        for m in modes:
+            with open('dump_v' + str(v) + '_'  + m + '.json') as f:
+                js[m] = json.load(f)
+        js_full[str(v)] = js
+    return js_full
+
+
+def date_hash(date_string):
+    date = [int(d) for d in date_string.split(sep='/')]
+    return date[0] + date[1]*31 * date[2]*31*12
