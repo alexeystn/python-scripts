@@ -25,7 +25,3 @@ Reads OpenTX log with GPS coordinates, overlays it on a satellite map using Goog
 ### osd_recognizer
 
 Reads numbers from raw DVR video
-
-### velocidrone_parser
-
-Download and parse leaderboards from Velocidrone simulator website
