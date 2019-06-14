@@ -22,3 +22,4 @@ velocidrone_parser/.idea
 velocidrone_parser/dump_lap1.json
 velocidrone_parser/dump_lap3.json
 velocidrone_parser/*.json
+*.mp4
