@@ -2,63 +2,58 @@ import cv2
 import numpy as np
 import random
 
-pad = 10
-size_x = 100
-size_y = 75
+CARD_SPACE = 10
+CARD_SIZE_X = 100
+CARD_SIZE_Y = 75
+CARD_NUM_X = 3
+CARD_NUM_Y = 2
+IMAGES_NUM = CARD_NUM_X * CARD_NUM_Y // 2
 
-num_x = 5
-num_y = 10
-
-num_img = num_x * num_y // 2
-
-image = 0
-combination = 0
-card_status = 0
-
-card_clicked = 0
+combination = []
+status = [] # 0 - removed, 1 - closed, 2 - open
 
 clicked_point = 0
 
-clicked_point = 0
+def generate_field():
+    global combination, status 
+    global CARD_SPACE, CARD_SIZE_X, CARD_SIZE_Y, CARD_NUM_X, CARD_NUM_Y
 
-def generate_field(card_status, combination):
-    global num_x, num_y, size_x, size_y, pad
-    image = np.ones((pad * (num_y+1) + num_y * size_y, pad * (num_x+1) + num_x * size_x, 3), np.uint8) * 255
-    for x in range(num_x):
-        for y in range(num_y):
-            base_x = pad + (size_x + pad) * x
-            base_y = pad + (size_y + pad) * y
-            if card_status[y, x] == 0:
+    image = np.ones((CARD_SPACE * (CARD_NUM_Y + 1) + CARD_NUM_Y * CARD_SIZE_Y,
+                     CARD_SPACE * (CARD_NUM_X + 1) + CARD_NUM_X * CARD_SIZE_X, 3), np.uint8) * 255
+    for x in range(CARD_NUM_X):
+        for y in range(CARD_NUM_Y):
+            base_x = CARD_SPACE + (CARD_SIZE_X + CARD_SPACE) * x
+            base_y = CARD_SPACE + (CARD_SIZE_Y + CARD_SPACE) * y
+            if status[y, x] == 0:
                 continue
-            if card_status[y, x] == 2:
+            if status[y, x] == 2:
                 filename = './img/{0:02d}.jpg'.format(combination[y, x])
-                print(filename)
-                im = cv2.imread(filename)
-                im = cv2.resize(im, (size_x, size_y), cv2.INTER_CUBIC)
+                card_image = cv2.imread(filename)
+                card_image = cv2.resize(card_image, (CARD_SIZE_X, CARD_SIZE_Y), cv2.INTER_CUBIC)
             else:
-                im = 200
-            image[base_y:base_y+size_y, base_x:base_x+size_x, :] = im
+                card_image = 200 # default grey color
+            image[base_y:base_y+CARD_SIZE_Y, base_x:base_x+CARD_SIZE_X, :] = card_image
     return image
 
 
 def click(event, x, y, flags, param):
     global clicked_point
     if event == cv2.EVENT_LBUTTONDOWN:
-        clicked_point = y, x
+        clicked_point = [y, x]
 
 
             
-counter = 1
+step_counter = 1
 
-opened_cards_number = 0
+opened_cards_count = 0
 
 window_name = 'Memo'
-card_status = np.ones((num_y, num_x), np.uint8)
-combination = np.concatenate((np.arange(num_img), np.arange(num_img)))
+status = np.ones((CARD_NUM_Y, CARD_NUM_X), np.uint8)
+combination = np.concatenate((np.arange(IMAGES_NUM), np.arange(IMAGES_NUM)))
 random.shuffle(combination)
-combination = combination.reshape(num_y, num_x)
+combination = combination.reshape(CARD_NUM_Y, CARD_NUM_X)
 
-image = generate_field(card_status, combination)
+image = generate_field()
 
 cv2.imshow(window_name, image)
 cv2.setMouseCallback(window_name, click)
@@ -69,42 +64,39 @@ while True:
         break;
     if clicked_point:
         y, x = clicked_point
-        
-        if (x % (size_x + pad) > pad) & (y % (size_y + pad) > pad):
-            x = x // (size_x + pad)
-            y = y // (size_y + pad)
-            print(x, y)
-            if card_status[y, x] == 1:
-                card_clicked = (y, x)
-                
-                if opened_cards_number == 0:
-                    opened_cards_number = 1
-                    y0, x0 = card_clicked
-                    card_status[y0, x0] = 2
-                    image = generate_field(card_status, combination)
+        if (x % (CARD_SIZE_X + CARD_SPACE) > CARD_SPACE) & (y % (CARD_SIZE_Y + CARD_SPACE) > CARD_SPACE):
+            x = x // (CARD_SIZE_X + CARD_SPACE)
+            y = y // (CARD_SIZE_Y + CARD_SPACE)
+            if status[y, x] == 1:
+                clicked_card = (y, x)
+                if opened_cards_count == 0:
+                    opened_cards_count = 1
+                    y0, x0 = clicked_card
+                    status[y0, x0] = 2
+                    image = generate_field()
                     cv2.imshow(window_name, image)
-                elif opened_cards_number == 1:
-                    opened_cards_number = 2
-                    y1, x1 = card_clicked
-                    card_status[y1, x1] = 2
-                    image = generate_field(card_status, combination)
+                elif opened_cards_count == 1:
+                    opened_cards_count = 2
+                    y1, x1 = clicked_card
+                    status[y1, x1] = 2
+                    image = generate_field()
                     cv2.imshow(window_name, image)
                     cv2.waitKey(1000)
-                    counter += 1
+                    step_counter += 1
                     if combination[y0, x0] == combination[y1, x1]:
-                        card_status[y0, x0] = 0
-                        card_status[y1, x1] = 0
-                        if not card_status.any():
-                            print('Solved in {0} steps'.format(counter))
+                        status[y0, x0] = 0
+                        status[y1, x1] = 0
+                        if not status.any():
                             break
                     else:
-                        card_status[y0, x0] = 1
-                        card_status[y1, x1] = 1             
-                    image = generate_field(card_status, combination)
+                        status[y0, x0] = 1
+                        status[y1, x1] = 1
+                    opened_cards_count = 0
+                    image = generate_field()
                     cv2.imshow(window_name, image)
-                    opened_cards_number = 0
-                print(card_clicked)
         clicked_point = 0
 
+print('Solved in {0} steps'.format(step_counter))
 cv2.destroyAllWindows()
+
 
