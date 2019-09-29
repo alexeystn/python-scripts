@@ -23,3 +23,5 @@ velocidrone_parser/dump_lap1.json
 velocidrone_parser/dump_lap3.json
 velocidrone_parser/*.json
 *.mp4
+students_list/results
+students_list/*.json
