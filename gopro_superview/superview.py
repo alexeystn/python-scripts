@@ -2,14 +2,14 @@ import cv2
 import numpy as np
 import time
 
-input_filename = 'YDXJ0094.mp4'
-output_filename = 'output.mp4' 
+input_filename = '/Users/imac/Desktop/PICT0105.AVI'
+output_filename = 'Resize_' + input_filename.split(sep='/')[-1] + '.mp4'
 
-start_time = 0
-stop_time = 0
+start_time = 0*60 + 36
+stop_time = 0*60 + 55
 
-output_width = 1280
-output_height = 720
+output_width = 640
+output_height = 480
 
 
 def generate_map(width, height):
@@ -17,9 +17,11 @@ def generate_map(width, height):
     map_x = np.tile(np.arange(width), (height, 1)).astype(np.float32)
     map_y = np.tile(np.arange(height), (width, 1)).astype(np.float32).T
 
+    map_x_shift = 0;
+    map_y_shift = 0; 
     map_x_shift = (np.sin((map_x/(width-1)-0.5)*2*np.pi)/np.pi/6) * width
     map_y_shift = (map_y/(height-1)-0.5) * (np.cos((map_x/(width-1)-0.5)*np.pi)/2-0.5) * height / 2
-
+    
     map_x += map_x_shift
     map_y += map_y_shift
     
@@ -53,10 +55,11 @@ t1 = time.time()
 
 for frame in range(start_frame, stop_frame):
     result, image = video_capture.read()
-    image = cv2.remap(np.array(image), map_x, map_y, cv2.INTER_LINEAR)
-    image = cv2.resize(image, (output_width, output_height), cv2.INTER_LINEAR)
+    #image = cv2.remap(np.array(image), map_x, map_y, cv2.INTER_LINEAR)
+    image = cv2.resize(image, (output_width, output_height), cv2.INTER_CUBIC)
     video_writer.write(image)
-    print('{0:.2f}%'.format((frame - start_frame)/(stop_frame - start_frame)*100))
+    if frame % 10 == 0:
+        print('{0:.2f}%'.format((frame - start_frame)/(stop_frame - start_frame)*100))
         
 video_writer.release()
 
