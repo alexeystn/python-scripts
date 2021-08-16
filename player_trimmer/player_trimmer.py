@@ -3,6 +3,7 @@ import time
 import os
 import sys
 import tkinter as tk
+import numpy as np
 from tkinter import filedialog
 
 root = tk.Tk()
@@ -15,11 +16,18 @@ output_filename = path_split[-1]
 if not output_filename:
     sys.exit(0)
 
-print(output_filename)
-output_filename = output_filename.split(sep='.')[0]
-output_filename += '_trim.mp4'
+def get_available_filename(filename):
+    filename = filename.split(sep='.')[0] + '_trim'
+    res = filename + '.mp4'
+    cnt = 1
+    while os.path.exists(res):
+        res = filename + '_{0}.mp4'.format(cnt)
+        cnt += 1
+    return res
+
 
 codec = "h264" # "mp4v" / "h264"
+scale = 2 # 1 or 2
 
 vcap = cv2.VideoCapture(input_filename)
 
@@ -33,7 +41,7 @@ fps = int(round(vcap.get(cv2.CAP_PROP_FPS)))
 frame_count = int(vcap.get(cv2.CAP_PROP_FRAME_COUNT))
 
 width_out = 640
-
+height_out = 480
 
 left_cursor = -1
 right_cursor = frame_count
@@ -45,19 +53,20 @@ was_playing_before_hold = True
 
 def save_selection():
     #output_filename = 'trim.mp4'
-    video_writer = cv2.VideoWriter(output_filename, cv2.VideoWriter_fourcc(*codec),
-                               fps, (width_out, height))
-    video_writer.set(cv2.VIDEOWRITER_PROP_QUALITY, 100)
+    video_writer = cv2.VideoWriter(get_available_filename(output_filename),
+                                   cv2.VideoWriter_fourcc(*codec),
+                                   fps, (width_out, height_out))
+    video_writer.set(cv2.VIDEOWRITER_PROP_QUALITY, 10) # does not work for h264
     vcap.set(cv2.CAP_PROP_POS_FRAMES, left_cursor-1)
     result, image = vcap.read()
 
     length = right_cursor - left_cursor - 1
     for fr in range(length):
         res, img = vcap.read()
-        img = cv2.resize(img, (width_out, height))
+        img = cv2.resize(img, (width_out, height_out))
         video_writer.write(img)
-        if fr % 10 == 0 or fr == length - 1:
-            print('{0:.2f}%'.format((fr/(length-1))*100))
+        if fr % 50 == 0 or fr == length - 1:
+            print('{0:.1f}%'.format((fr/(length-1))*100))
     video_writer.release()
 
 
@@ -72,27 +81,29 @@ def print_text(image, text, x, y):
     cv2.putText(image, str(text), (x,y), font, 0.7, (0,0,0), 3, cv2.LINE_AA)
     cv2.putText(image, str(text), (x,y), font, 0.7, (255,255,255), 2, cv2.LINE_AA)
 
+bar_h = 15
 
 def draw_bar(image, pos):
-    print_text(image, str(pos), 10, height//4)
+    #print_text(image, str(pos), 10, height//(scale*2))
     if pos == left_cursor:
-        print_text(image, 'Start', width//2-60, height//4)
+        print_text(image, 'Start', width//scale-60, height//(scale*2))
     if pos == right_cursor:
-        print_text(image, 'Stop', width//2-60, height//4)
-    bar_h = 10
-    cv2.rectangle(image, (0, height // 2 - bar_h), (int(width / 2) - 1, height//2-1),
-                  (0,0,0), -1)
-    cv2.rectangle(image, (1, height // 2 - bar_h + 1), (int(width * pos / 2 / frame_count), height//2-2),
+        print_text(image, 'Stop', width//scale-60, height//(scale*2))
+
+    cv2.rectangle(image, (1, height // scale + 1), (int(width * pos / scale / frame_count), height//scale+bar_h-2),
                   (255,255,255), -1)
 
-    y2 = height // 2 - bar_h
-    y1 = height // 2 - 1
-    x = int(width * left_cursor / 2 / frame_count)
+    y2 = height // scale + 2
+    y1 = height // scale - 3 + bar_h
+    y3 = (y1 + y2) // 2
+    x = int(width * left_cursor / scale / frame_count)
     if left_cursor != -1:
-        cv2.rectangle(image, (x-1, y1), (x+2, y2), (0,0,255), -1)
-    x = int(width * right_cursor / 2 / frame_count)
+        points = np.array( [(x,y2), (x,y1), (x+5,y3)] )
+        cv2.drawContours(image, [points], 0, (0,0,255), -1)
+    x = int(width * right_cursor / scale / frame_count)
     if right_cursor != frame_count:
-        cv2.rectangle(image, (x-1, y1), (x+2, y2), (0,192,0), -1)
+        points = np.array( [(x,y2), (x,y1), (x-5,y3)] )
+        cv2.drawContours(image, [points], 0, (0,0,255), -1)
     
 
 def on_mouse(event, x, y, a, b):
@@ -103,7 +114,7 @@ def on_mouse(event, x, y, a, b):
         was_playing_before_hold = is_playing
         is_playing = False
     if mouse_hold:
-        rewind = int(x * frame_count * 2 / width)
+        rewind = int(x * frame_count * scale / width)
         if rewind < 0:
             rewind = 0
         if rewind > frame_count:
@@ -113,18 +124,33 @@ def on_mouse(event, x, y, a, b):
         mouse_hold = False
         if was_playing_before_hold: 
             is_playing = True
-        
-
-cv2.namedWindow(input_filename)
-cv2.setMouseCallback(input_filename, on_mouse)
 
 next_time = 0
 
+def pause(fps):
+    global next_time
+    current_time = time.time()
+    if current_time < next_time:
+        while current_time < next_time:
+            current_time = time.time()
+        increment = 1
+    else:
+        increment = int((current_time - next_time)*fps) + 1
+    if next_time == 0:
+        increment = 1
+    next_time = next_time + increment / fps
+    return increment
+
+window_name = path_split[-1]
+cv2.namedWindow(window_name)
+cv2.setMouseCallback(window_name, on_mouse)
+
+
+
 while True:
     
-    while time.time() < next_time:
-        continue
-    next_time = time.time() + 1/fps
+    increment = pause(fps)
+    
     if rewind != -1:
         position = rewind
         rewind = -1
@@ -133,19 +159,27 @@ while True:
     vcap.set(cv2.CAP_PROP_POS_FRAMES, position)
     result, image = vcap.read()
 
-    image = cv2.resize(image, (width//2, height//2))
-    draw_bar(image, position)
-    cv2.imshow(input_filename, image)
+    if result:
+        image = cv2.resize(image, (width//scale, height//scale))
+    else:
+        image = prev_image
+    image_out = np.concatenate((image, np.zeros((bar_h,width//scale,3),dtype='uint8')))
+    prev_image = image
+    
+    draw_bar(image_out, position)
+    cv2.setWindowProperty(window_name, cv2.WND_PROP_TOPMOST, 1)
+    cv2.imshow(window_name, image_out)
     
     if position == right_cursor and is_playing_selection:
         is_playing_selection = False
         is_playing = False
 
-    if position == frame_count - 1:
+    if position >= frame_count - increment:
         is_playing = False
         
     if is_playing:
-        position += 1
+        print(increment)
+        position += increment
     
     k = cv2.waitKeyEx(1)
     if k != -1:
@@ -170,18 +204,18 @@ while True:
         right_cursor = position
         print('Set Stop to', position)
         print_selection()
-    if k == 13: # Enter
+    if k == 9: # Tab
         is_playing_selection = True
         is_playing = True
         position = left_cursor
-    if k == 10 or k == 9: # Ctrl+Enter / Tab
+    if k == 13: #Enter
         is_playing_selection = False
         is_playing = False
         save_selection();
-    if k != -1:
-        print(k)
+#    if k != -1:
+#        print(k)
     
-    if cv2.getWindowProperty(input_filename,0) < 0:
+    if cv2.getWindowProperty(window_name,0) < 0:
        break
 
 cv2.destroyAllWindows()
