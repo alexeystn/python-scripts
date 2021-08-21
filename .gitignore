@@ -25,3 +25,4 @@ velocidrone_parser/*.json
 *.mp4
 students_list/results
 students_list/*.json
+students_list/phone
