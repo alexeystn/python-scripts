@@ -26,3 +26,5 @@ velocidrone_parser/*.json
 students_list/results
 students_list/*.json
 students_list/phone
+calib.npy
+sound_timer/input/*.wav

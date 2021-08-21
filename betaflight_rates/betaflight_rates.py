@@ -38,16 +38,11 @@ class Rates:
 
 rates_list = []
 
-rates_list.append( Rates('Default',    1.00, 0.70, 0.00, 'grey'))
+rates_list.append( Rates('Original-PR', 1.00, 0.70, 0.00, 'orangered'))
+rates_list.append( Rates('Original-Y',  2.10, 0.00, 0.00, 'forestgreen'))
 
-rates_list.append( Rates('HellFly-PR', 0.80, 0.50, 0.20, 'orangered'))
-rates_list.append( Rates('HellFly-Y',  0.70, 0.35, 0.15, 'orangered'))
-
-rates_list.append( Rates('Alexey-PR',  0.45, 0.75, 0.15, 'forestgreen'))
-rates_list.append( Rates('Alexey-Y',   0.35, 0.70, 0.15, 'forestgreen'))
-
-rates_list.append( Rates('Shvedov-PR', 0.95, 0.80, 0.30, 'dodgerblue'))
-rates_list.append( Rates('Shvedov-Y',  1.10, 0.70, 0.30, 'dodgerblue'))
+#rates_list.append( Rates('Linear-PR',  0.6, 0.70, 0.00, 'forestgreen'))
+#rates_list.append( Rates('Linear-Y',   0.6, 0.55, 0.00, 'forestgreen'))
 
 
 legend = []
