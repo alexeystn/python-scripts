@@ -28,3 +28,4 @@ students_list/*.json
 students_list/phone
 calib.npy
 sound_timer/input/*.wav
+crossfire/capture
