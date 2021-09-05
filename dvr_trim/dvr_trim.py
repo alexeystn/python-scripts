@@ -52,22 +52,50 @@ was_playing_before_hold = True
 
 
 def save_selection():
-    #output_filename = 'trim.mp4'
-    video_writer = cv2.VideoWriter(get_available_filename(output_filename),
-                                   cv2.VideoWriter_fourcc(*codec),
-                                   fps, (width_out, height_out))
-    video_writer.set(cv2.VIDEOWRITER_PROP_QUALITY, 10) # does not work for h264
-    vcap.set(cv2.CAP_PROP_POS_FRAMES, left_cursor-1)
-    result, image = vcap.read()
 
-    length = right_cursor - left_cursor - 1
-    for fr in range(length):
-        res, img = vcap.read()
-        img = cv2.resize(img, (width_out, height_out))
-        video_writer.write(img)
-        if fr % 50 == 0 or fr == length - 1:
-            print('{0:.1f}%'.format((fr/(length-1))*100))
-    video_writer.release()
+    if 1: # use ffmpeg
+        vcap.set(cv2.CAP_PROP_POS_FRAMES, left_cursor-1)
+        left_cursor_ts = vcap.get(cv2.CAP_PROP_POS_MSEC)/1000
+        vcap.set(cv2.CAP_PROP_POS_FRAMES, right_cursor)
+        right_cursor_ts = vcap.get(cv2.CAP_PROP_POS_MSEC)/1000
+        t1 = left_cursor_ts
+        t2 = right_cursor_ts
+        t1s = '{0:.0f}:{1:08.5f}'.format(t1//60,t1%60)
+        t2s = '{0:.0f}:{1:08.5f}'.format(t2//60,t2%60)
+        #print(t1s, t2s)
+        bitrate = 8000
+        ffmpeg_params = ['./ffmpeg',
+                         '-i "{0}"'.format(input_filename),
+                         '-ss ' + t1s,
+                         '-to ' + t2s,
+                         '-c:v libx264',
+                         '-b:v {0}k'.format(bitrate),
+                         '-s 640x480',
+                         '-filter:a "volume=0.01"',
+                         '-pix_fmt yuv420p',
+                         get_available_filename(output_filename),
+                         '-hide_banner -y']
+        cmd = ' '.join(ffmpeg_params)
+        print('Encoding with \'ffmpeg\'...', end='')
+        os.system(cmd)
+        print('Done')
+        print(t1s, t2s)
+        
+
+    else: # use openCV
+        video_writer = cv2.VideoWriter(get_available_filename(output_filename),
+                                       cv2.VideoWriter_fourcc(*codec),
+                                       fps, (width_out, height_out))
+        vcap.set(cv2.CAP_PROP_POS_FRAMES, left_cursor-1)
+        result, image = vcap.read()
+        length = right_cursor - left_cursor - 1
+        for fr in range(length):
+            res, img = vcap.read()
+            img = cv2.resize(img, (width_out, height_out))
+            video_writer.write(img)
+            if fr % 50 == 0 or fr == length - 1:
+                print('{0:.1f}%'.format((fr/(length-1))*100))
+        video_writer.release()
 
 
 def print_selection():
@@ -178,7 +206,7 @@ while True:
         is_playing = False
         
     if is_playing:
-        print(increment)
+        #print(increment)
         position += increment
     
     k = cv2.waitKeyEx(1)
