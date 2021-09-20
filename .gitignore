@@ -30,3 +30,4 @@ calib.npy
 sound_timer/input/*.wav
 crossfire/capture
 ffmpeg
+*.json
