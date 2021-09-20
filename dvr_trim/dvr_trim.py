@@ -16,8 +16,10 @@ output_filename = path_split[-1]
 if not output_filename:
     sys.exit(0)
 
-def get_available_filename(filename):
+def get_available_filename(filename, use_ff=0):
     filename = filename.split(sep='.')[0] + '_trim'
+    if use_ff:
+        filename += '_ff'
     res = filename + '.mp4'
     cnt = 1
     while os.path.exists(res):
@@ -51,13 +53,16 @@ mouse_hold = False
 was_playing_before_hold = True
 
 
-def save_selection():
+def save_selection(use_ff=0):
 
-    if 1: # use ffmpeg
+    if use_ff: # use ffmpeg
         vcap.set(cv2.CAP_PROP_POS_FRAMES, left_cursor-1)
         left_cursor_ts = vcap.get(cv2.CAP_PROP_POS_MSEC)/1000
+        print(left_cursor_ts)
         vcap.set(cv2.CAP_PROP_POS_FRAMES, right_cursor)
+        
         right_cursor_ts = vcap.get(cv2.CAP_PROP_POS_MSEC)/1000
+        print(right_cursor_ts)
         t1 = left_cursor_ts
         t2 = right_cursor_ts
         t1s = '{0:.0f}:{1:08.5f}'.format(t1//60,t1%60)
@@ -70,10 +75,11 @@ def save_selection():
                          '-to ' + t2s,
                          '-c:v libx264',
                          '-b:v {0}k'.format(bitrate),
-                         '-s 640x480',
+                         '-vf "scale=640:480, setdar=4/3"',
+                         #'-vf scale=320:240',
                          '-filter:a "volume=0.01"',
                          '-pix_fmt yuv420p',
-                         get_available_filename(output_filename),
+                         get_available_filename(output_filename, use_ff),
                          '-hide_banner -y']
         cmd = ' '.join(ffmpeg_params)
         print('Encoding with \'ffmpeg\'...', end='')
@@ -83,7 +89,7 @@ def save_selection():
         
 
     else: # use openCV
-        video_writer = cv2.VideoWriter(get_available_filename(output_filename),
+        video_writer = cv2.VideoWriter(get_available_filename(output_filename, use_ff),
                                        cv2.VideoWriter_fourcc(*codec),
                                        fps, (width_out, height_out))
         vcap.set(cv2.CAP_PROP_POS_FRAMES, left_cursor-1)
@@ -239,7 +245,8 @@ while True:
     if k == 13: #Enter
         is_playing_selection = False
         is_playing = False
-        save_selection();
+        save_selection(use_ff=True);
+        save_selection(use_ff=False);
 #    if k != -1:
 #        print(k)
     
