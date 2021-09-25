@@ -2,6 +2,7 @@ import cv2
 import time
 import os
 import sys
+import wave
 import tkinter as tk
 import numpy as np
 from tkinter import filedialog
@@ -16,10 +17,8 @@ output_filename = path_split[-1]
 if not output_filename:
     sys.exit(0)
 
-def get_available_filename(filename, use_ff=0):
+def get_available_filename(filename):
     filename = filename.split(sep='.')[0] + '_trim'
-    if use_ff:
-        filename += '_ff'
     res = filename + '.mp4'
     cnt = 1
     while os.path.exists(res):
@@ -53,55 +52,53 @@ mouse_hold = False
 was_playing_before_hold = True
 
 
-def save_selection(use_ff=0):
+def reencode_video(filename):
+    wavefile = 'temp.wav'
+    w = wave.open(wavefile, mode='wb')
+    w.setframerate(22050)
+    w.setsampwidth(2)
+    w.setnchannels(1)
+    w.writeframes(np.zeros((1000,2), dtype='int16'))
+    w.close()
 
-    if use_ff: # use ffmpeg
-        vcap.set(cv2.CAP_PROP_POS_FRAMES, left_cursor-1)
-        left_cursor_ts = vcap.get(cv2.CAP_PROP_POS_MSEC)/1000
-        print(left_cursor_ts)
-        vcap.set(cv2.CAP_PROP_POS_FRAMES, right_cursor)
-        
-        right_cursor_ts = vcap.get(cv2.CAP_PROP_POS_MSEC)/1000
-        print(right_cursor_ts)
-        t1 = left_cursor_ts
-        t2 = right_cursor_ts
-        t1s = '{0:.0f}:{1:08.5f}'.format(t1//60,t1%60)
-        t2s = '{0:.0f}:{1:08.5f}'.format(t2//60,t2%60)
-        #print(t1s, t2s)
-        bitrate = 8000
-        ffmpeg_params = ['./ffmpeg',
-                         '-i "{0}"'.format(input_filename),
-                         '-ss ' + t1s,
-                         '-to ' + t2s,
-                         '-c:v libx264',
-                         '-b:v {0}k'.format(bitrate),
-                         '-vf "scale=640:480, setdar=4/3"',
-                         #'-vf scale=320:240',
-                         '-filter:a "volume=0.01"',
-                         '-pix_fmt yuv420p',
-                         get_available_filename(output_filename, use_ff),
-                         '-hide_banner -y']
-        cmd = ' '.join(ffmpeg_params)
-        print('Encoding with \'ffmpeg\'...', end='')
-        os.system(cmd)
-        print('Done')
-        print(t1s, t2s)
-        
+    spl = os.path.splitext(filename)
+    print(spl)
+    new_filename = spl[0] + '_enc' + '.mp4'#spl[1]
 
-    else: # use openCV
-        video_writer = cv2.VideoWriter(get_available_filename(output_filename, use_ff),
-                                       cv2.VideoWriter_fourcc(*codec),
-                                       fps, (width_out, height_out))
-        vcap.set(cv2.CAP_PROP_POS_FRAMES, left_cursor-1)
-        result, image = vcap.read()
-        length = right_cursor - left_cursor - 1
-        for fr in range(length):
-            res, img = vcap.read()
-            img = cv2.resize(img, (width_out, height_out))
-            video_writer.write(img)
-            if fr % 50 == 0 or fr == length - 1:
-                print('{0:.1f}%'.format((fr/(length-1))*100))
-        video_writer.release()
+    ffmpeg_params = ['./ffmpeg',
+                     '-i', filename,
+                     '-i', wavefile,
+                     '-c:v copy',
+                     # '-c:v libx264', '-b:v {0}k'.format(bitrate),
+                     # '-vf "scale=640:480, setdar=4/3"',
+                     # '-filter:a "volume=0.01"', '-pix_fmt yuv420p',
+                     new_filename,
+                     '-hide_banner -y']
+    #print(new_filename)
+    cmd = ' '.join(ffmpeg_params)
+    #print(cmd)
+    os.system(cmd)
+    print('Encoding with \'ffmpeg\'...', end='')
+    os.remove(wavefile)
+    os.remove(filename)
+    print('Done')
+
+def save_selection():
+    new_filename = get_available_filename(output_filename)
+    video_writer = cv2.VideoWriter(new_filename,
+                                    cv2.VideoWriter_fourcc(*codec),
+                                    fps, (width_out, height_out))
+    vcap.set(cv2.CAP_PROP_POS_FRAMES, left_cursor-1)
+    result, image = vcap.read()
+    length = right_cursor - left_cursor - 1
+    for fr in range(length):
+        res, img = vcap.read()
+        img = cv2.resize(img, (width_out, height_out))
+        video_writer.write(img)
+        if fr % 50 == 0 or fr == length - 1:
+            print('{0:.1f}%'.format((fr/(length-1))*100))
+    video_writer.release()
+    reencode_video(new_filename)
 
 
 def print_selection():
@@ -245,8 +242,7 @@ while True:
     if k == 13: #Enter
         is_playing_selection = False
         is_playing = False
-        save_selection(use_ff=True);
-        save_selection(use_ff=False);
+        save_selection()
 #    if k != -1:
 #        print(k)
     
