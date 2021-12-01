@@ -52,6 +52,32 @@ mouse_hold = False
 was_playing_before_hold = True
 
 
+def compress_video(filename, wavefile, compress=True):
+
+    spl = os.path.splitext(filename)
+    new_filename = spl[0] + '_enc'
+    if compress:
+        new_filename += '_comp'
+    new_filename += '.mp4'
+    
+    ffmpeg_params = ['./ffmpeg',
+                     '-i', filename,
+                     '-i', wavefile,
+                     new_filename]
+    bitrate = 2000
+    if compress:
+        ffmpeg_params.insert(5, '-c:v libx264')
+        ffmpeg_params.insert(6, '-b:v {0}k'.format(bitrate))
+        #ffmpeg_params.insert(7, '-vf "scale=640:480, setdar=4/3"')
+    else:
+        ffmpeg_params.insert(5, '-c:v copy')
+
+    cmd = ' '.join(ffmpeg_params)
+    #print(cmd)
+    print('Encoding with \'ffmpeg\'...')  
+    os.system(cmd)
+
+
 def reencode_video(filename):
     wavefile = 'temp.wav'
     w = wave.open(wavefile, mode='wb')
@@ -61,24 +87,9 @@ def reencode_video(filename):
     w.writeframes(np.zeros((1000,2), dtype='int16'))
     w.close()
 
-    spl = os.path.splitext(filename)
-    print(spl)
-    new_filename = spl[0] + '_enc' + '.mp4'#spl[1]
-
-    ffmpeg_params = ['./ffmpeg',
-                     '-i', filename,
-                     '-i', wavefile,
-                     '-c:v copy',
-                     # '-c:v libx264', '-b:v {0}k'.format(bitrate),
-                     # '-vf "scale=640:480, setdar=4/3"',
-                     # '-filter:a "volume=0.01"', '-pix_fmt yuv420p',
-                     new_filename,
-                     '-hide_banner -y']
-    #print(new_filename)
-    cmd = ' '.join(ffmpeg_params)
-    #print(cmd)
-    os.system(cmd)
-    print('Encoding with \'ffmpeg\'...', end='')
+    compress_video(filename, wavefile, True)
+    compress_video(filename, wavefile, False)
+ 
     os.remove(wavefile)
     os.remove(filename)
     print('Done')
@@ -216,6 +227,8 @@ while True:
     if k != -1:
         is_playing_selection = False
     if k == 27: # Esc
+        cv2.destroyAllWindows()
+        sys.exit(0)
         break
     if k == 32: # Space
         is_playing = not is_playing
