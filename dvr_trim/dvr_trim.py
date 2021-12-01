@@ -46,10 +46,29 @@ height_out = 480
 
 left_cursor = -1
 right_cursor = frame_count
+bookmarks = []
 is_playing_selection = False
 
 mouse_hold = False
 was_playing_before_hold = True
+
+
+def add_mark(marks, new_mark):
+    if new_mark in marks:
+        marks.remove(new_mark)
+        new_marks = marks
+    else:
+        min_dist = 3 * fps # minimal distance
+        new_marks = [m for m in marks if (np.abs(m - new_mark) > min_dist)]
+        new_marks.append(new_mark)
+    new_marks.sort()
+    if len(new_marks) > 1:
+        lap_times = np.diff(np.array(new_marks,dtype='float'))
+        lap_times = lap_times / fps * 1.004 # Calibration coefficient
+        print('Laps: ', end='')
+        print(', '.join(['{0:.2f}'.format(lap) for lap in lap_times]))
+
+    return new_marks
 
 
 def compress_video(filename, wavefile, compress=True):
@@ -146,6 +165,10 @@ def draw_bar(image, pos):
     if right_cursor != frame_count:
         points = np.array( [(x,y2), (x,y1), (x-5,y3)] )
         cv2.drawContours(image, [points], 0, (0,0,255), -1)
+    for mark in bookmarks:
+        x = int(width * mark / scale / frame_count)
+        points = np.array( [(x,y1), (x+5,y3), (x,y2), (x-5,y3)] )
+        cv2.drawContours(image, [points], 0, (0,160,160), -1)
     
 
 def on_mouse(event, x, y, a, b):
@@ -252,10 +275,12 @@ while True:
         is_playing_selection = True
         is_playing = True
         position = left_cursor
-    if k == 13: #Enter
+    if k == 13: # Enter
         is_playing_selection = False
         is_playing = False
         save_selection()
+    if k == 116: # 'T'
+        bookmarks = add_mark(bookmarks, position)
 #    if k != -1:
 #        print(k)
     
