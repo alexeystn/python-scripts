@@ -107,46 +107,8 @@ def get_latency(sw_toggle_time, rx_time):
     return latency
 
 
-    
-#sys.exit(0)
 
+rx_rc_data, rx_rc_time = load_crsf_rx('./filter/small.txt')
 
-configs = ['crossfire50', 'crossfire150', 'tracer250', 'elrs500']
-letters = ['a', 'b', 'c']
-result = {}
-
-for config in configs:
-    conf_latency = []
-    for letter in letters:
-        config_x = config + letter
-        print(config_x)
-
-        channel = 5
-        sw_toggle_time = load_tx_switch('./capture/{0}_sw.csv'.format(config_x))
-        sw_toggle_time = sw_toggle_time[1:]
-
-        #print(len(sw_toggle_time))
-        sw_toggle_time = filter_tx_switches(sw_toggle_time)
-        #print(len(sw_toggle_time))
-        rx_rc_data, rx_rc_time = load_crsf_rx('./capture/{0}_rx.csv'.format(config_x))
-        rx_time = find_rx_switches(rx_rc_data[:, channel], rx_rc_time, 100)
-        tx_rc_data, tx_rc_time = load_crsf_rx('./capture/{0}_tx.csv'.format(config_x))
-        tx_time = find_rx_switches(tx_rc_data[:, channel], tx_rc_time, 100)
-        
-        #print(len(rx_time))
-        #latency = get_latency(sw_toggle_time, rx_time)
-        latency = np.array(rx_time - tx_time[:len(rx_time)])/1000
-
-        conf_latency.append(latency)
-    conf_latency = np.hstack(conf_latency)
-    result[config] = list(conf_latency)
-    print(config_x)
-
-a_file = open("data.json", "w")
-json.dump(result, a_file)
-a_file.close()
-
-
-
-
-#plot_histogram(latency, (0, 40))
+plt.plot(rx_rc_data[:,0], '.-')
+plt.show()
