@@ -2,17 +2,21 @@
 
 Small useful Python scripts:
 
-* **betaflight_rates** - Plot Betaflight rate curves
+* **betaflight_rates** - Plot Betaflight rate curves.
 
 * **calibrate_camera** - Calculate camera matrix and distortion coefficients with OpenCV and undistort video.
 
 * **countries_shapes** - Overlay country shapes one on another in 1:1 scale.
 
+* **crossfire** - Decode CRSF __receiver__ protocol, emulate CRSF __telemetry__ protocol.
+
 * **drv_trim** - View, trim and save FPV DVR recordings.
 
-* **forum_parser** - Login to forum, downloads multiple pages with user list, parse them to CSV
+* **forum_parser** - Login to forum, downloads multiple pages with user list, parse them to CSV.
 
-* **gpx_tracker** - Read and parse GPX tracks
+* **gpx_tracker** - Read and parse GPX tracks.
+
+* **hid_reports** - Capture and plot gamepad HID reports.
 
 * **map_download** - Download public topographic map fragments and stitch them to one image.
 
@@ -24,10 +28,16 @@ Small useful Python scripts:
 
 * **osd_recognizer** - Read digits from raw DVR video.
 
+* **pal_ntsc_decode** - Analyze video signal waveform recorded with oscilloscope.
+
 * **panorama** - Convert Equirectangular to Cubemap and back.
 
 * **photo_tools** - Search and rename tools.
 
 * **sound_timer** - Create long audio files with certain sound marks.
 
+* **students_list** - One-time project.
+
 * **xiaomi_yi_remote** - Control Xiaomi Yi camera via TCP.
+
+* **xml_to_csv** - One-time project.
