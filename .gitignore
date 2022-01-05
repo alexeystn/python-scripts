@@ -31,3 +31,5 @@ sound_timer/input/*.wav
 crossfire/capture
 ffmpeg
 *.json
+*.wfm
+description.txt
