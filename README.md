@@ -2,6 +2,8 @@
 
 Small useful Python scripts:
 
+* **betaflight_blackbox** - Cut one big BBL file to many little.
+
 * **betaflight_rates** - Plot Betaflight rate curves.
 
 * **calibrate_camera** - Calculate camera matrix and distortion coefficients with OpenCV and undistort video.
