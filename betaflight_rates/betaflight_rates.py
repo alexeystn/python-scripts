@@ -1,57 +1,46 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib import rc
 
-class Rates:
+def apply_betaflight_rates(command, rates):
+    # Rate, SuperRate, Expo
+    rate = rates[0]
+    super_rate = rates[1]
+    expo = rates[2]
+    com = command.copy()
+    if expo:
+        com = com * np.abs(com)**3 * expo + com * (1 - expo);
+    if rate > 2.0:
+        rate += 14.54 * (rate - 2.0);
+    angle_rate = 200.0 * rate * com
+    if super_rate:
+        super_factor = 1.0 / np.clip(1.0 - (np.abs(com) * super_rate), 0.01, 1.00)
+        angle_rate *= super_factor
+    return angle_rate
 
-    def __init__(self, name, rc_rate, super_rate, rc_expo, color):
-        self.name = name
-        self.rc_rate = rc_rate
-        self.super_rate = super_rate
-        self.rc_expo = rc_expo
-        self.color = color
+def apply_actual_rates(command, rates):
+    # CenterSensitivity, MaxRate, Expo
+    center = rates[0]
+    max_rate = rates[1]
+    expo = rates[2]   
+    com = command.copy() 
+    expo_factor = np.abs(com) * ((com**5) * expo + com * (1-expo))
+    stick_movement = max([0, max_rate - center])
+    angle_rate = com * center + stick_movement * expo_factor
+    return angle_rate
 
-    def angle_speed(self, com, rate, srate, expo):
-        if expo:
-            com = com**4 * expo + com * (1 - expo)
-        if rate > 2:
-            rate = rate + 14.54 * (rate - 2)
-        angle = 200 * rate * com
-        if srate:
-            factor = 1 / (np.clip(1 - (com * srate), 0.01, 1))
-            angle *= factor
-        return np.clip(angle, 0, 2000)
+rc_range = np.linspace(-1,1,100)
 
-    def curve(self):
-        n = 500
-        commands = np.linspace(0, 1, n)
-        output = np.zeros((n, 1))
-        for i, c in enumerate(commands):
-            output[i] = self.angle_speed(c, self.rc_rate, self.super_rate, self.rc_expo)
-        return output
+# rate_bf = apply_betaflight_rates(rc_range, [0.6, 0.7, 0.0])
+# rate_act = apply_actual_rates(rc_range, [120, 400, 0.5])
 
-    def legend(self):
-        m = self.curve()
-        s = '{3:12s} {0:.2f}  {1:.2f}  {2:.2f}  ({4:.0f})'. \
-            format(self.rc_rate, self.super_rate, self.rc_expo, self.name, m[-1][0])
-        return s
+rate_bf = apply_betaflight_rates(rc_range, [0.6, 0.55, 0.0])
+rate_act = apply_actual_rates(rc_range, [120, 300, 0.5])
 
-rates_list = []
+ratio = rate_act / rate_bf
+print('{0:.1f}% - {1:.1f}%'.format(min(ratio)*100, max(ratio)*100))
 
-rates_list.append( Rates('Original-PR', 1.00, 0.70, 0.00, 'orangered'))
-rates_list.append( Rates('Original-Y',  2.10, 0.00, 0.00, 'forestgreen'))
+plt.plot( rc_range, rate_bf )
+plt.plot( rc_range, rate_act )
 
-#rates_list.append( Rates('Linear-PR',  0.6, 0.70, 0.00, 'forestgreen'))
-#rates_list.append( Rates('Linear-Y',   0.6, 0.55, 0.00, 'forestgreen'))
-
-
-legend = []
-
-for r in rates_list:
-    plt.plot(r.curve(), r.color)
-    legend.append(r.legend())
-
-rc('font', family='Consolas')
-plt.legend(legend, title=' '*11+'rate  super expo')
 plt.grid(True)
 plt.show()
