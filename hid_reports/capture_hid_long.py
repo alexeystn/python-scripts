@@ -1,15 +1,9 @@
 import hid # pip3 install hidapi
 import numpy as np
 import time
+import sys
 import datetime
-from scipy import signal
-
-# Show list of all HID devices:
-for device in hid.enumerate():
-    print('0x{0:04x}:0x{1:04x} {2}'.format(
-          device['vendor_id'],
-          device['product_id'],
-          device['product_string']))
+#from scipy import signal
 
 
 def analyze_file(filename):
@@ -29,7 +23,7 @@ def analyze_file(filename):
 
     throttle_diff = np.abs(np.diff(throttle))*fs
     result = np.mean(throttle_diff)
-    print('{0:.1f}%'.format(result))
+    print('      {0:.0f}%'.format(result))
     
 
 class FileWriter:
@@ -66,6 +60,14 @@ class FileWriter:
             else:
                 self.last_throttle_time = time.time()
             
+# Show list of all HID devices:
+##for device in hid.enumerate():
+##    print('0x{0:04x}:0x{1:04x} {2}'.format(
+##          device['vendor_id'],
+##          device['product_id'],
+##          device['product_string']
+##          ))
+    # if device['usage_page'] == 5 or device['usage'] in (4,5,8):
 
 # Put your radio IDs here:
 vendor_id = 0x1209
@@ -85,6 +87,8 @@ trigger_state_prev = False
 start_time = 0
 
 f = FileWriter()
+
+print('Ready')
 
 try:
     while True:
