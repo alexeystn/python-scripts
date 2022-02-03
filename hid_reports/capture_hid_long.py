@@ -2,6 +2,7 @@ import hid # pip3 install hidapi
 import numpy as np
 import time
 import datetime
+from scipy import signal
 
 # Show list of all HID devices:
 for device in hid.enumerate():
@@ -11,18 +12,40 @@ for device in hid.enumerate():
           device['product_string']))
 
 
+def analyze_file(filename):
+    fs = 500
+    # cutoff = 30
+    n = 11
+    # desired = (1,1,0,0)
+    # bands = (0, cutoff*0.5, cutoff*1.5, fs/2)
+    # fir = signal.firls(n, bands, desired, nyq=fs/2)
+    fir = np.ones((n,))/n
+    rc_data = np.genfromtxt(filename, delimiter=',')
+    throttle_channel = 2
+    throttle = rc_data[:,throttle_channel] / 2048 * 100
+    mask = np.where(throttle > 10)[0]
+    throttle = throttle[mask[0]:mask[-1]]
+    throttle = np.convolve(throttle, fir, mode='valid')
+
+    throttle_diff = np.abs(np.diff(throttle))*fs
+    result = np.mean(throttle_diff)
+    print('{0:.1f}%'.format(result))
+    
+
 class FileWriter:
 
     delay = 2
     started = False
     f = None
+    last_throttle_time = 0
 
     def start(self):
         if not self.started:
             self.started = True
             d = datetime.datetime.now()
-            filename = d.strftime('%Y%m%d_%H%M%S.csv')
-            self.f = open('./logs/' + filename, 'w')
+            filename = './logs/' + d.strftime('%Y%m%d_%H%M%S.csv')
+            self.f = open(filename, 'w')
+            self.filename = filename
             print('Start')
 
     def stop(self):
@@ -30,11 +53,19 @@ class FileWriter:
             self.f.close()
             self.started = False
             print('Stop')
+            self.last_throttle_time = 0
+            analyze_file(self.filename)
 
     def write(self, report):
         if self.started:
             string = ','.join([str(i) for i in report]) + '\n'
             self.f.write(string)
+            if report[2] < 10:
+                if time.time() - self.last_throttle_time > self.delay and self.last_throttle_time:
+                    self.stop()
+            else:
+                self.last_throttle_time = time.time()
+            
 
 # Put your radio IDs here:
 vendor_id = 0x1209
