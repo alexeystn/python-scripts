@@ -1,9 +1,22 @@
-import hid # pip3 install hidapi
-import numpy as np
 import time
 import sys
+import os
 import datetime
-#from scipy import signal
+import numpy as np
+import hid # pip3 install hidapi
+
+
+VENDOR_ID = 0x1209
+PRODUCT_ID = 0x4F54
+
+
+def list_hid_devices():
+    for device in hid.enumerate():
+        print('0x{0:04x}:0x{1:04x} {2}'.format(
+              device['vendor_id'],
+              device['product_id'],
+              device['product_string']
+              ))
 
 
 def analyze_file(filename):
@@ -18,95 +31,99 @@ def analyze_file(filename):
     throttle_channel = 2
     throttle = rc_data[:,throttle_channel] / 2048 * 100
     mask = np.where(throttle > 10)[0]
+    if len(mask) == 0:
+        print('===== No data')
+        return
     throttle = throttle[mask[0]:mask[-1]]
     throttle = np.convolve(throttle, fir, mode='valid')
 
     throttle_diff = np.abs(np.diff(throttle))*fs
     result = np.mean(throttle_diff)
-    print('      {0:.0f}%'.format(result))
+    print('===== {0:.0f}%'.format(result))
+
     
+class HIDCapturer:
 
-class FileWriter:
+    stop_delay = 2
+    start_delay = 2 
+    output_path = './logs/'
 
-    delay = 2
-    started = False
-    f = None
-    last_throttle_time = 0
+    def __init__(self, trig_ch, thr_ch):
+        self.trigger_channel = trig_ch - 1
+        self.throttle_channel = thr_ch - 1
+        self.start_time = 0
+        self.prev_trigger_state = False
+        self.last_throttle_time = 0
+        self.started = False
+        self.file = None
+        if not os.path.exists(self.output_path):
+            os.mkdir(self.output_path)
 
     def start(self):
-        if not self.started:
-            self.started = True
-            d = datetime.datetime.now()
-            filename = './logs/' + d.strftime('%Y%m%d_%H%M%S.csv')
-            self.f = open(filename, 'w')
-            self.filename = filename
-            print('Start')
+        self.started = True
+        d = datetime.datetime.now()
+        filename = self.output_path + d.strftime('%Y%m%d_%H%M%S.csv')
+        self.file = open(filename, 'w')
+        self.filename = filename
+        print('Start')
 
     def stop(self):
-        if self.started:
-            self.f.close()
-            self.started = False
-            print('Stop')
-            self.last_throttle_time = 0
-            analyze_file(self.filename)
+        self.file .close()
+        self.started = False
+        print('Stop')
+        analyze_file(self.filename)
 
     def write(self, report):
+        
+        if report[self.throttle_channel] > 10:
+            self.last_throttle_time = time.time()
+        
         if self.started:
             string = ','.join([str(i) for i in report]) + '\n'
-            self.f.write(string)
-            if report[2] < 10:
-                if time.time() - self.last_throttle_time > self.delay and self.last_throttle_time:
+            self.file.write(string)
+            if report[self.throttle_channel] < 10:
+                if (time.time() - self.last_throttle_time > self.stop_delay) \
+                and self.last_throttle_time:
                     self.stop()
-            else:
+        else:
+            trigger_state = report[self.trigger_channel] > 2000
+            if trigger_state and not self.prev_trigger_state:
+                self.start_time = time.time() + self.start_delay
+            self.prev_trigger_state = trigger_state
+            if time.time() > self.start_time and self.start_time:
+                self.start_time = 0
                 self.last_throttle_time = time.time()
-            
-# Show list of all HID devices:
-##for device in hid.enumerate():
-##    print('0x{0:04x}:0x{1:04x} {2}'.format(
-##          device['vendor_id'],
-##          device['product_id'],
-##          device['product_string']
-##          ))
-    # if device['usage_page'] == 5 or device['usage'] in (4,5,8):
+                self.start()
 
-# Put your radio IDs here:
-vendor_id = 0x1209
-product_id = 0x4f54
-opentx_radio = hid.device()
-opentx_radio.open(vendor_id, product_id)
-opentx_radio.set_nonblocking(True)
 
-report_max_size = 64
-cnt = 0
+def parse_hid_report(report):
+    report_np = np.array(report)
+    channels = report_np[4::2]*256 + report_np[3::2]
+    return channels
 
-trigger_channel = 5
 
-trigger_state = False
-trigger_state_prev = False
+def main():
 
-start_time = 0
+    # list_hid_devices()
+    opentx_radio = hid.device()
+    opentx_radio.open(VENDOR_ID, PRODUCT_ID)
+    opentx_radio.set_nonblocking(True)
 
-f = FileWriter()
+    hcap = HIDCapturer(trig_ch=6, thr_ch=3)
+    print('Ready')
 
-print('Ready')
+    try:
+        while True:
+            report = opentx_radio.read(64)
+            if report:    
+                channels = parse_hid_report(report)
+                hcap.write(channels)
 
-try:
-    while True:
-        report = opentx_radio.read(report_max_size)
-        if report:
-            report_np = np.array(report)
-            channels = report_np[4::2]*256 + report_np[3::2]
-            f.write(channels)
+    except KeyboardInterrupt:
+        hcap.stop()
 
-            trigger_state = channels[trigger_channel] > 2000
-            if trigger_state and not trigger_state_prev:
-                f.stop()
-                start_time = time.time() + f.delay
-            trigger_state_prev = trigger_state
-            
-            if start_time and time.time() > start_time:
-                start_time = 0
-                f.start()
 
-except KeyboardInterrupt:
-    f.stop()
+if __name__ == '__main__':
+    main()
+
+
