@@ -67,26 +67,31 @@ class HIDCapturer:
         self.filename = filename
         print('Start')
 
-    def stop(self):
+    def stop(self, analyze=False):
         self.file .close()
         self.started = False
-        print('Stop')
-        analyze_file(self.filename)
+        if analyze:
+            print('Stop')
+            analyze_file(self.filename)
+        else:
+            print('Cancel')
 
     def write(self, report):
         
         if report[self.throttle_channel] > 10:
             self.last_throttle_time = time.time()
+        trigger_state = report[self.trigger_channel] > 2000
         
         if self.started:
             string = ','.join([str(i) for i in report]) + '\n'
             self.file.write(string)
+            if trigger_state:
+                self.stop()  
             if report[self.throttle_channel] < 10:
                 if (time.time() - self.last_throttle_time > self.stop_delay) \
                 and self.last_throttle_time:
-                    self.stop()
+                    self.stop(analyze=True)  
         else:
-            trigger_state = report[self.trigger_channel] > 2000
             if trigger_state and not self.prev_trigger_state:
                 self.start_time = time.time() + self.start_delay
             self.prev_trigger_state = trigger_state
