@@ -33,3 +33,5 @@ ffmpeg
 *.json
 *.wfm
 description.txt
+vsteam_json_parser/*.txt
+vsteam_json_parser/db
