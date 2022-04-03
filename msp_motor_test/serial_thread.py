@@ -64,6 +64,7 @@ class SerialThread(QThread):
     isRunning = False
     motorList = []
     profile = None
+    parallel = False
 
     def __init__(self):
         QThread.__init__(self)
@@ -92,24 +93,34 @@ class SerialThread(QThread):
         while True:
             if self.isRunning:
                 self.guiUpdateSignal.emit(State.RUNNING)
+
                 motors = self.motorList
                 for mot in motors:
                     self.rpmLogger.newLog(mot)
 
-                timeProfile = self.profile['time']
-                powerProfile = self.profile['power']
-                startTime = time.time()
-                while True:
-                    currentTime = time.time() - startTime
-                    currentPower = np.interp(currentTime, timeProfile, powerProfile)
-                    m = int(1000 + currentPower / 100.0 * 1000)
-                    rpm = self.sendMotorValue(motors, m)
-                    self.rpmLogger.put(currentTime, motors, rpm)
-                    if currentTime > timeProfile[-1]:
-                        break
+                if self.parallel:
+                    motorSets = [motors]
+                else:
+                    motorSets = [[m] for m in motors]
 
-                self.sendMotorValue(motors, 950)
+                for motors in motorSets:
+                    timeProfile = self.profile['time']
+                    powerProfile = self.profile['power']
+                    startTime = time.time()
+                    while True:
+                        currentTime = time.time() - startTime
+                        currentPower = np.interp(currentTime, timeProfile, powerProfile)
+                        m = int(1000 + currentPower / 100.0 * 1000)
+                        rpm = self.sendMotorValue(motors, m)
+                        self.rpmLogger.put(currentTime, motors, rpm)
+                        if currentTime > timeProfile[-1]:
+                            break
+                    self.sendMotorValue(motors, 950)
+
+
                 self.isRunning = False
+
+
                 self.guiUpdateSignal.emit(State.FINISHED)
 
                 intervals = np.diff(np.array(self.rpmLogger.rmpLog[-1]['time']))
@@ -146,6 +157,7 @@ class SerialThread(QThread):
             return
         self.motorList = arg['motors']
         self.profile = arg['profile']
+        # self.parallel = arg['parallel']
         self.isRunning = True
         return
 
