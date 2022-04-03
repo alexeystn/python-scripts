@@ -28,6 +28,8 @@ Small useful Python scripts:
 
 * **midpoint_cities** - Calculate equidistant point for 3 points on the globe.
 
+* **msp_motor_test** - Test motors and ESCs connected to Betaflight FC through MSP.
+
 * **osd_recognizer** - Read digits from raw DVR video.
 
 * **pal_ntsc_decode** - Analyze video signal waveform recorded with oscilloscope.
