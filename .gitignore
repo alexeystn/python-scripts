@@ -30,7 +30,6 @@ calib.npy
 sound_timer/input/*.wav
 crossfire/capture
 ffmpeg
-*.json
 *.wfm
 description.txt
 vsteam_json_parser/*.txt
