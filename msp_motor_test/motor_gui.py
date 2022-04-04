@@ -4,13 +4,10 @@ from serial_thread import SerialThread, State
 import numpy as np
 import json
 
-from PyQt5.QtCore import QDateTime, Qt, QTimer, QThread, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 
-from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
-        QDial, QDialog, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-        QProgressBar, QPushButton, QRadioButton, QScrollBar, QSizePolicy,
-        QSlider, QSpinBox, QStyleFactory, QTableWidget, QTableWidgetItem, QTabWidget, QTextEdit,
-        QVBoxLayout, QWidget, QFileDialog, QButtonGroup, QErrorMessage)
+from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog,  QGridLayout,
+                             QGroupBox, QHBoxLayout, QLabel, QPushButton, QRadioButton, QVBoxLayout)
 
 import pyqtgraph as pg
 
@@ -20,7 +17,7 @@ def load_profiles():
         profiles = json.load(f)
     for k in profiles.keys():
         arr = np.array(profiles[k], dtype='float')
-        profiles[k] = {'time': arr[:,0], 'power': arr[:,1]}
+        profiles[k] = {'time': arr[:, 0], 'power': arr[:, 1]}
     return profiles
 
 
@@ -37,7 +34,6 @@ class Window(QDialog):
         self.palette = [(230, 0, 0), (0, 192, 0), (0, 128, 255), (192, 160, 0)]
         self.profiles = load_profiles()
         self.activeProfile = None
-        emptyLabel = QLabel('X')
 
         connectionGroup = QGroupBox("Connection")
         connectionGrid = QVBoxLayout()
@@ -55,15 +51,14 @@ class Window(QDialog):
         motorsGrid = QGridLayout()
         motorsGroup.setLayout(motorsGrid)
         pos = [[1, 1], [0, 1], [1, 0], [0, 0]]
-        self.radioMotor = [None] * 5
+        self.radioMotor = [QRadioButton('{0}'.format(i + 1)) for i in range(5)]
         for i in range(4):
-            self.radioMotor[i] = QRadioButton('{0}'.format(i + 1))
             label = QLabel(' ')
             s = ','.join([str(c) for c in self.palette[i]])
             label.setStyleSheet("background-color: rgb({0})".format(s))
             motorsGrid.addWidget(label, pos[i][0], pos[i][1]*2)
             motorsGrid.addWidget(self.radioMotor[i], pos[i][0], pos[i][1]*2+1)
-        self.radioMotor[4] = QRadioButton('All motors')
+        self.radioMotor[4].setText('All motors')
         self.radioMotor[4].setChecked(True)
         motorsGrid.addWidget(self.radioMotor[4], 2, 0, 1, 4)
 
@@ -130,10 +125,10 @@ class Window(QDialog):
         self.serialThread.guiUpdateSignal.connect(self.guiUpdate)
         self.connectToPortSignal.connect(self.serialThread.connectToPort)
 
-        self.profileApply(0)
+        self.profileApply()
         self.serialThread.start()
 
-    def profileApply(self, idx):
+    def profileApply(self):
         self.activeProfile = self.profiles[self.profileCombo.currentText()]
         self.plotActiveProfile()
         self.graphRpm.setXRange(0, self.activeProfile['time'][-1])
@@ -163,6 +158,7 @@ class Window(QDialog):
             self.graphUpdate()
 
     def runTest(self):
+        motorNumber = 0
         for i, radio in enumerate(self.radioMotor):
             if radio.isChecked():
                 motorNumber = i
@@ -215,14 +211,14 @@ class Window(QDialog):
         rpmLog = self.serialThread.rpmLogger.get()
         self.graphRpm.clear()
 
-
         for rpmLogPart in rpmLog:
             if rpmLogPart:
                 x = rpmLogPart['time']
                 y = rpmLogPart['rpm']
                 c = rpmLogPart['motor']
                 self.graphRpm.plot(x, y, pen=pg.mkPen({'color': self.palette[c], 'width': 3}))
-                                   # symbol='o', symbolSize=5, symbolBrush='k')
+                # symbol='o', symbolSize=5, symbolBrush='k')
+
 
 if __name__ == '__main__':
     load_profiles()

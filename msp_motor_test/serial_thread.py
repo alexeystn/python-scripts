@@ -35,7 +35,7 @@ class LoggerRPM:
         self.rmpLog.append(res)
         self.logPointers[n] = len(self.rmpLog) - 1
 
-    def clear(self, mask=None):
+    def clear(self):
         self.mutex.lock()
         self.rmpLog = []
         self.logPointers = [0, 0, 0, 0]
@@ -54,6 +54,7 @@ class LoggerRPM:
         result = self.rmpLog.copy()
         self.mutex.unlock()
         return result
+
 
 class SerialThread(QThread):
     infoUpdateSignal = pyqtSignal(dict)
@@ -80,10 +81,11 @@ class SerialThread(QThread):
             print('Connecting to', portName)
             try:
                 self.port = serial.Serial(portName, timeout=1)
-            except Exception:
+            except Exception as e:
                 print('Cannot connect')
                 self.isConnected = False
                 self.port.close()
+                print(e)
             else:
                 self.isConnected = True
                 info = self.getInfo()
@@ -118,9 +120,7 @@ class SerialThread(QThread):
                             break
                     self.sendMotorValue(motors, 950)
 
-
                 self.isRunning = False
-
 
                 self.guiUpdateSignal.emit(State.FINISHED)
 
@@ -145,10 +145,11 @@ class SerialThread(QThread):
         response = self.readMessage()
         return response
 
-    def decodeRpm(self, msg):
+    @staticmethod
+    def decodeRpm(msg):
         lsb = msg[1::13]
         msb = msg[2::13]
-        rpm = [l + m * 256 for l, m in zip(lsb, msb)]
+        rpm = [l + m * 256 for (l, m) in zip(lsb, msb)]
         return rpm
 
     def runTest(self, arg):
@@ -179,7 +180,8 @@ class SerialThread(QThread):
 
         return info
 
-    def encodeMessage(self, code, data):
+    @staticmethod
+    def encodeMessage(code, data):
         buf = [ord('$'), ord('M'), ord('<'), len(data), code.value]
         checksum = buf[3] ^ buf[4]
         for d in data:
@@ -188,7 +190,8 @@ class SerialThread(QThread):
         buf.append(checksum)
         return buf
 
-    def decodeTargetName(self, msg):
+    @staticmethod
+    def decodeTargetName(msg):
         mcu_length_pos = 8
         target_name_start = mcu_length_pos + msg[mcu_length_pos] + 1
         target_name_length = msg[target_name_start]
@@ -220,6 +223,7 @@ class SerialThread(QThread):
             payload = b''
         return payload
 
-    def getAvailablePortsList(self):
+    @staticmethod
+    def getAvailablePortsList():
         result = [c.device for c in serial.tools.list_ports.comports()]
         return result
