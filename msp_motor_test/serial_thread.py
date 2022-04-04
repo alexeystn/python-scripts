@@ -65,6 +65,7 @@ class SerialThread(QThread):
     motorList = []
     profile = None
     parallel = False
+    type = None
 
     def __init__(self):
         QThread.__init__(self)
@@ -157,7 +158,8 @@ class SerialThread(QThread):
             return
         self.motorList = arg['motors']
         self.profile = arg['profile']
-        # self.parallel = arg['parallel']
+        self.parallel = arg['parallel']
+        self.type = arg['type']
         self.isRunning = True
         return
 

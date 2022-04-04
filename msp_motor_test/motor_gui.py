@@ -27,7 +27,6 @@ def load_profiles():
 class Window(QDialog):
 
     connectToPortSignal = pyqtSignal(str)
-    #signalStartCom =
     runTestSignal = pyqtSignal(dict)
 
     def __init__(self, parent=None):
@@ -35,12 +34,67 @@ class Window(QDialog):
         super(Window, self).__init__(parent)
         self.setWindowFlags(Qt.WindowCloseButtonHint)
         self.setWindowTitle("Motor Test")
+        self.palette = [(230, 0, 0), (0, 192, 0), (0, 128, 255), (192, 160, 0)]
+        self.profiles = load_profiles()
+        self.activeProfile = None
+        emptyLabel = QLabel('X')
 
+        connectionGroup = QGroupBox("Connection")
+        connectionGrid = QVBoxLayout()
+        connectionGroup.setLayout(connectionGrid)
         self.comportCombo = QComboBox()
+        self.comportCombo.setSizeAdjustPolicy(2)
         self.connectButton = QPushButton('Connect')
-        self.refreshButton = QPushButton('Refresh')
-        self.statusLabel = QLabel('Not connected')
+        self.autoCheckbox = QCheckBox('Autoconnect')
         self.connectButton.setDefault(True)
+        connectionGrid.addWidget(self.comportCombo)
+        connectionGrid.addWidget(self.connectButton)
+        connectionGrid.addWidget(self.autoCheckbox)
+
+        motorsGroup = QGroupBox("Motors")
+        motorsGrid = QGridLayout()
+        motorsGroup.setLayout(motorsGrid)
+        pos = [[1, 1], [0, 1], [1, 0], [0, 0]]
+        self.radioMotor = [None] * 5
+        for i in range(4):
+            self.radioMotor[i] = QRadioButton('{0}'.format(i + 1))
+            label = QLabel(' ')
+            s = ','.join([str(c) for c in self.palette[i]])
+            label.setStyleSheet("background-color: rgb({0})".format(s))
+            motorsGrid.addWidget(label, pos[i][0], pos[i][1]*2)
+            motorsGrid.addWidget(self.radioMotor[i], pos[i][0], pos[i][1]*2+1)
+        self.radioMotor[4] = QRadioButton('All motors')
+        self.radioMotor[4].setChecked(True)
+        motorsGrid.addWidget(self.radioMotor[4], 2, 0, 1, 4)
+
+        profileGroup = QGroupBox("Profile")
+        profileGrid = QVBoxLayout()
+        profileGroup.setLayout(profileGrid)
+        self.profileCombo = QComboBox()
+        self.profileCombo.addItems(self.profiles.keys())
+        self.radioOneByOne = QRadioButton('One-by-one')
+        self.radioSimultaneous = QRadioButton('Simultaneous')
+        profileGrid.setSpacing(18)
+        profileGrid.addWidget(self.profileCombo)
+        profileGrid.addWidget(self.radioOneByOne)
+        profileGrid.addWidget(self.radioSimultaneous)
+
+        testGroup = QGroupBox("Test")
+        testGrid = QVBoxLayout()
+        testGroup.setLayout(testGrid)
+        self.testTypeCombo = QComboBox()
+        self.testTypeCombo.addItems(['RPM', 'Vibro'])
+        self.clearButton = QPushButton('Clear')
+        self.runButton = QPushButton('Run')
+        testGrid.addWidget(self.testTypeCombo)
+        testGrid.addWidget(self.clearButton)
+        testGrid.addWidget(self.runButton)
+
+        controlGrid = QHBoxLayout()
+        controlGrid.addWidget(connectionGroup)
+        controlGrid.addWidget(motorsGroup)
+        controlGrid.addWidget(profileGroup)
+        controlGrid.addWidget(testGroup)
 
         pg.setConfigOption('antialias', True)
         pg.setConfigOption('background', 'w')
@@ -52,47 +106,24 @@ class Window(QDialog):
         self.timer = QTimer()
         self.timer.timeout.connect(self.plotTimeout)
         self.timer.start(50)
-
         self.graphRpm.setMouseEnabled(x=False, y=False)
         self.graphProfile.setMouseEnabled(x=False, y=False)
         self.graphRpm.showGrid(1, 2, 0.5)
         self.graphProfile.showGrid(1, 2, 0.5)
 
-        self.clearButton = QPushButton('Clear')
-        self.motorCombo = QComboBox()
-        motorList = ['Motor {0}'.format(i+1) for i in range(4)] + ['All motors']
-        self.motorCombo.addItems(motorList)
-
-        self.profiles = load_profiles()
-        self.profileCombo = QComboBox()
-        self.profileCombo.addItems(self.profiles.keys())
-        self.activeProfile = None
-
-        self.runButton = QPushButton('Run')
-
-        fullLayout = QGridLayout()
-        fullLayout.addWidget(self.comportCombo, 0, 0, 1, 2)
-        fullLayout.addWidget(self.refreshButton, 0, 2)
-        fullLayout.addWidget(self.connectButton, 0, 3)
-        fullLayout.addWidget(self.statusLabel, 1, 0, 1, 4)
-        fullLayout.addWidget(self.graphRpm, 2, 0, 1, 4)
-        fullLayout.addWidget(self.graphProfile, 3, 0, 1, 4)
-        fullLayout.addWidget(self.clearButton, 4, 0)
-        fullLayout.addWidget(self.motorCombo, 4, 1)
-        fullLayout.addWidget(self.profileCombo, 4, 2)
-        fullLayout.addWidget(self.runButton, 4, 3)
-
+        fullLayout = QVBoxLayout()
+        fullLayout.addWidget(self.graphRpm)
+        fullLayout.addWidget(self.graphProfile)
+        fullLayout.addLayout(controlGrid)
+        self.setLayout(fullLayout)
 
         self.clearButton.clicked.connect(self.clearAllLogs)
-        self.refreshButton.clicked.connect(self.comportRefreshList)
+        # self.refreshButton.clicked.connect(self.comportRefreshList)
         self.connectButton.clicked.connect(self.comportConnect)
         self.runButton.clicked.connect(self.runTest)
         self.profileCombo.currentIndexChanged.connect(self.profileApply)
 
-        self.setLayout(fullLayout)
-
         self.serialThread = SerialThread()
-
         self.comportRefreshList()
         self.runTestSignal.connect(self.serialThread.runTest)
         self.serialThread.infoUpdateSignal.connect(self.infoUpdate)
@@ -105,7 +136,6 @@ class Window(QDialog):
     def profileApply(self, idx):
         self.activeProfile = self.profiles[self.profileCombo.currentText()]
         self.plotActiveProfile()
-        print('Profile:', self.profileCombo.currentText())
         self.graphRpm.setXRange(0, self.activeProfile['time'][-1])
         self.graphProfile.setXRange(0, self.activeProfile['time'][-1])
 
@@ -133,18 +163,25 @@ class Window(QDialog):
             self.graphUpdate()
 
     def runTest(self):
-        motorNumber = self.motorCombo.currentIndex()
+        for i, radio in enumerate(self.radioMotor):
+            if radio.isChecked():
+                motorNumber = i
+                break
         if motorNumber == 4:
             motorList = [0, 1, 2, 3]
         else:
             motorList = [motorNumber]
-        self.runTestSignal.emit({'motors': motorList, 'profile': self.activeProfile})
+        runArg = {'motors': motorList,
+                  'profile': self.activeProfile,
+                  'parallel': self.radioSimultaneous.isChecked(),
+                  'type': self.testTypeCombo.currentText()
+                  }
+        self.runTestSignal.emit(runArg)
         self.plotAutoUpdateEnabled = True
-        print('START!!!', motorNumber)
 
     def infoUpdate(self, info):
         line = ' | '.join([info['target'], info['firmware'], info['version'], info['api']])
-        self.statusLabel.setText(line)
+        self.setWindowTitle(line)
 
     def clearAllLogs(self):
         if self.serialThread.isRunning:
@@ -177,14 +214,14 @@ class Window(QDialog):
     def graphUpdate(self):
         rpmLog = self.serialThread.rpmLogger.get()
         self.graphRpm.clear()
-        palette = [(255, 0, 0), (0, 192, 0), (0, 64, 255), (192, 160, 0)]
+
 
         for rpmLogPart in rpmLog:
             if rpmLogPart:
                 x = rpmLogPart['time']
                 y = rpmLogPart['rpm']
                 c = rpmLogPart['motor']
-                self.graphRpm.plot(x, y, pen=pg.mkPen({'color': palette[c], 'width': 3}))
+                self.graphRpm.plot(x, y, pen=pg.mkPen({'color': self.palette[c], 'width': 3}))
                                    # symbol='o', symbolSize=5, symbolBrush='k')
 
 if __name__ == '__main__':
