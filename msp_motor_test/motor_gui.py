@@ -69,6 +69,7 @@ class Window(QDialog):
         self.profileCombo.addItems(self.profiles.keys())
         self.radioOneByOne = QRadioButton('One-by-one')
         self.radioSimultaneous = QRadioButton('Simultaneous')
+        self.radioSimultaneous.setChecked(True)
         profileGrid.setSpacing(18)
         profileGrid.addWidget(self.profileCombo)
         profileGrid.addWidget(self.radioOneByOne)
@@ -101,6 +102,7 @@ class Window(QDialog):
         self.timer = QTimer()
         self.timer.timeout.connect(self.plotTimeout)
         self.timer.start(50)
+
         self.graphRpm.setMouseEnabled(x=False, y=False)
         self.graphProfile.setMouseEnabled(x=False, y=False)
         self.graphRpm.showGrid(1, 2, 0.5)
@@ -113,7 +115,6 @@ class Window(QDialog):
         self.setLayout(fullLayout)
 
         self.clearButton.clicked.connect(self.clearAllLogs)
-        # self.refreshButton.clicked.connect(self.comportRefreshList)
         self.connectButton.clicked.connect(self.comportConnect)
         self.runButton.clicked.connect(self.runTest)
         self.profileCombo.currentIndexChanged.connect(self.profileApply)
@@ -124,6 +125,10 @@ class Window(QDialog):
         self.serialThread.infoUpdateSignal.connect(self.infoUpdate)
         self.serialThread.guiUpdateSignal.connect(self.guiUpdate)
         self.connectToPortSignal.connect(self.serialThread.connectToPort)
+
+        self.timerCom = QTimer()
+        self.timerCom.timeout.connect(self.comportRefreshList)
+        self.timerCom.start(1000)
 
         self.profileApply()
         self.serialThread.start()
@@ -193,10 +198,11 @@ class Window(QDialog):
         self.connectToPortSignal.emit(None)
 
     def comportRefreshList(self):
+        if self.serialThread.isConnected:
+            return
         selectedItem = 0
         self.comportCombo.clear()
         available_ports = self.serialThread.getAvailablePortsList()
-
         for i, port in enumerate(available_ports):
             if 'modem' in port:
                 selectedItem = i
