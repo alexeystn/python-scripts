@@ -12,6 +12,7 @@ class Msp(enum.Enum):
     MSP_FC_VARIANT = 2
     MSP_FC_VERSION = 3
     MSP_BOARD_INFO = 4
+    MSP_RAW_IMU = 102
     MSP_MOTOR_TELEMETRY = 139
     MSP_SET_MOTOR = 214
 
@@ -67,6 +68,7 @@ class SerialThread(QThread):
     profile = None
     parallel = False
     type = None
+    prevAccValue = None
 
     def __init__(self):
         QThread.__init__(self)
@@ -114,11 +116,11 @@ class SerialThread(QThread):
                         currentTime = time.time() - startTime
                         currentPower = np.interp(currentTime, timeProfile, powerProfile)
                         m = int(1000 + currentPower / 100.0 * 1000)
-                        rpm = self.sendMotorValue(motors, m)
-                        self.rpmLogger.put(currentTime, motors, rpm)
+                        response = self.sendMotorValue(motors, m, self.type)
+                        self.rpmLogger.put(currentTime, motors, response)
                         if currentTime > timeProfile[-1]:
                             break
-                    self.sendMotorValue(motors, 950)
+                    self.sendMotorValue(motors, 950, self.type)
 
                 self.isRunning = False
 
@@ -128,16 +130,20 @@ class SerialThread(QThread):
                 intervalMean = np.median(intervals)
                 print('Frequency: {0:.2f}Hz'.format(1 / intervalMean))
 
-    def sendMotorValue(self, motorIdx, value):
+    def sendMotorValue(self, motorIdx, value, testType):
         packet = [0] * 8
         for m in motorIdx:
             packet[m * 2] = value % 256
             packet[m * 2 + 1] = value // 256
 
-        self.mspSend(Msp.MSP_SET_MOTOR, packet)  # TODO: Speed-up exchange
-        motorTelemetry = self.mspSend(Msp.MSP_MOTOR_TELEMETRY, [])
-        rpm = self.decodeRpm(motorTelemetry)
-        return rpm
+        self.mspSend(Msp.MSP_SET_MOTOR, packet)
+        if testType == 'RPM':
+            motorTelemetry = self.mspSend(Msp.MSP_MOTOR_TELEMETRY, [])
+            response = self.decodeRpm(motorTelemetry)
+        else:  # Vibro
+            imuTelemetry = self.mspSend(Msp.MSP_RAW_IMU, [])
+            response = self.decodeImu(imuTelemetry)
+        return response
 
     def mspSend(self, code, data):
         msg = self.encodeMessage(code, data)
@@ -152,6 +158,22 @@ class SerialThread(QThread):
         rpm = [l + m * 256 for (l, m) in zip(lsb, msb)]
         return rpm
 
+    def decodeImu(self, msg):
+        lsb = msg[0:6:2]
+        msb = msg[1:6:2]
+        imuCurrent = [np.int16(l + m * 256) for (l, m) in zip(lsb, msb)]
+        if not self.prevAccValue:
+            self.prevAccValue = imuCurrent
+            result = 0
+        else:
+            dx = imuCurrent[0] - self.prevAccValue[0]
+            dy = imuCurrent[1] - self.prevAccValue[1]
+            #dz = imuCurrent[0] - self.prevAccValue[0]
+            dXY = np.sqrt(dx*dx+dy*dy)
+            result = dXY
+            self.prevAccValue = imuCurrent
+        return [result] * 4
+
     def runTest(self, arg):
         if not self.isConnected:
             return
@@ -161,6 +183,7 @@ class SerialThread(QThread):
         self.profile = arg['profile']
         self.parallel = arg['parallel']
         self.type = arg['type']
+        self.prevAccValue = None
         self.isRunning = True
         return
 
