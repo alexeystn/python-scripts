@@ -166,8 +166,8 @@ class SerialThread(QThread):
             self.prevAccValue = imuCurrent
             result = 0
         else:
-            dx = imuCurrent[0] - self.prevAccValue[0]
-            dy = imuCurrent[1] - self.prevAccValue[1]
+            dx = float(imuCurrent[0] - self.prevAccValue[0])
+            dy = float(imuCurrent[1] - self.prevAccValue[1])
             #dz = imuCurrent[0] - self.prevAccValue[0]
             dXY = np.sqrt(dx*dx+dy*dy)
             result = dXY
