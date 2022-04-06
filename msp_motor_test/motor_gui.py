@@ -4,7 +4,7 @@ from serial_thread import SerialThread, State
 import numpy as np
 import json
 
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal
+from PyQt5.QtCore import Qt, QTimer, QSettings, pyqtSignal
 
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog,  QGridLayout,
                              QGroupBox, QHBoxLayout, QLabel, QPushButton, QRadioButton, QVBoxLayout)
@@ -25,6 +25,32 @@ class Window(QDialog):
 
     connectToPortSignal = pyqtSignal(str)
     runTestSignal = pyqtSignal(dict)
+
+    def load_settings(self):
+        settings = QSettings("AlexeyStn", "MotorTest")
+        a = settings.value("autoconnect")
+        self.autoCheckbox.setChecked(a)
+        p = settings.value("comport")
+        self.comportCombo.setCurrentText(p)
+        p = settings.value("profile")
+        self.profileCombo.setCurrentText(p)
+        t = settings.value("type")
+        self.testTypeCombo.setCurrentText(t)
+        p = settings.value("parallel")
+        self.radioSimultaneous.setChecked(p)
+        m = settings.value("motor")
+        self.radioMotor[m].setChecked(True)
+
+    def save_settings(self):
+        settings = QSettings("AlexeyStn", "MotorTest")
+        settings.setValue("autoconnect", self.autoCheckbox.isChecked())
+        settings.setValue("comport", self.comportCombo.currentText())
+        settings.setValue("profile", self.profileCombo.currentText())
+        settings.setValue("type", self.testTypeCombo.currentText())
+        settings.setValue("parallel", self.radioSimultaneous.isChecked())
+        m = [ch.isChecked() for ch in self.radioMotor].index(True)
+        settings.setValue("motor", m)
+        print("Settings saved")
 
     def __init__(self, parent=None):
 
@@ -126,9 +152,15 @@ class Window(QDialog):
         self.serialThread.guiUpdateSignal.connect(self.guiUpdate)
         self.connectToPortSignal.connect(self.serialThread.connectToPort)
 
+        try:
+            self.load_settings()
+        except Exception as e:
+            print('Cannot load settings')
+            print(e)
+
         self.timerCom = QTimer()
         self.timerCom.timeout.connect(self.comportRefreshList)
-        self.timerCom.start(1000)
+        # self.timerCom.start(1000)
 
         self.profileApply()
         self.serialThread.start()
@@ -163,6 +195,7 @@ class Window(QDialog):
             self.graphUpdate()
 
     def runTest(self):
+        self.save_settings()
         motorNumber = 0
         for i, radio in enumerate(self.radioMotor):
             if radio.isChecked():
@@ -201,13 +234,24 @@ class Window(QDialog):
         if self.serialThread.isConnected:
             return
         selectedItem = 0
-        self.comportCombo.clear()
+
         available_ports = self.serialThread.getAvailablePortsList()
+        displayed_ports = [self.comportCombo.itemText(i) for i in range(self.comportCombo.count())]
+        # TODO: fix switching back (only add or remove)
+
+        if set(available_ports) == set(displayed_ports):
+            print('Ports OK')
+            return
+
+        self.comportCombo.clear()
         for i, port in enumerate(available_ports):
-            if 'modem' in port:
-                selectedItem = i
             self.comportCombo.addItem(port)
+
+            #if 'modem' in port:
+            #    selectedItem = i
+
         self.comportCombo.setCurrentIndex(selectedItem)
+
 
     def plotTimeout(self):
         if self.plotAutoUpdateEnabled:
