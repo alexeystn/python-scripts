@@ -28,10 +28,12 @@ class Window(QDialog):
 
     def load_settings(self):
         settings = QSettings("AlexeyStn", "MotorTest")
-        a = settings.value("autoconnect")
-        self.autoCheckbox.setChecked(a)
         p = settings.value("comport")
-        self.comportCombo.setCurrentText(p)
+        displayed_ports = [self.comportCombo.itemText(i) for i in range(self.comportCombo.count())]
+        if p in displayed_ports:
+            self.comportCombo.setCurrentText(p)
+        else:
+            print("Cannot find port")
         p = settings.value("profile")
         self.profileCombo.setCurrentText(p)
         t = settings.value("type")
@@ -43,7 +45,6 @@ class Window(QDialog):
 
     def save_settings(self):
         settings = QSettings("AlexeyStn", "MotorTest")
-        settings.setValue("autoconnect", self.autoCheckbox.isChecked())
         settings.setValue("comport", self.comportCombo.currentText())
         settings.setValue("profile", self.profileCombo.currentText())
         settings.setValue("type", self.testTypeCombo.currentText())
@@ -66,12 +67,11 @@ class Window(QDialog):
         connectionGroup.setLayout(connectionGrid)
         self.comportCombo = QComboBox()
         self.comportCombo.setSizeAdjustPolicy(2)
+        self.refreshButton = QPushButton('Refresh')
         self.connectButton = QPushButton('Connect')
-        self.autoCheckbox = QCheckBox('Autoconnect')
-        self.connectButton.setDefault(True)
         connectionGrid.addWidget(self.comportCombo)
         connectionGrid.addWidget(self.connectButton)
-        connectionGrid.addWidget(self.autoCheckbox)
+        connectionGrid.addWidget(self.refreshButton)
 
         motorsGroup = QGroupBox("Motors")
         motorsGrid = QGridLayout()
@@ -121,13 +121,14 @@ class Window(QDialog):
         pg.setConfigOption('antialias', True)
         pg.setConfigOption('background', 'w')
         self.graphRpm = pg.PlotWidget()
-        self.graphRpm.setTitle('E-RPM / 1000')
         self.graphProfile = pg.PlotWidget()
         self.graphProfile.setTitle('Profile')
         self.plotAutoUpdateEnabled = False
         self.timer = QTimer()
         self.timer.timeout.connect(self.plotTimeout)
-        self.timer.start(50)
+        self.timer.start(200)
+
+        # TODO: Fix MSP freezes
 
         self.graphRpm.setMouseEnabled(x=False, y=False)
         self.graphProfile.setMouseEnabled(x=False, y=False)
@@ -142,8 +143,10 @@ class Window(QDialog):
 
         self.clearButton.clicked.connect(self.clearAllLogs)
         self.connectButton.clicked.connect(self.comportConnect)
+        self.refreshButton.clicked.connect(self.comportRefreshList)
         self.runButton.clicked.connect(self.runTest)
         self.profileCombo.currentIndexChanged.connect(self.profileApply)
+        self.testTypeCombo.currentIndexChanged.connect(self.testTypeApply)
 
         self.serialThread = SerialThread()
         self.comportRefreshList()
@@ -158,11 +161,8 @@ class Window(QDialog):
             print('Cannot load settings')
             print(e)
 
-        self.timerCom = QTimer()
-        self.timerCom.timeout.connect(self.comportRefreshList)
-        # self.timerCom.start(1000)
-
         self.profileApply()
+        self.testTypeApply()
         self.serialThread.start()
 
     def profileApply(self):
@@ -170,6 +170,13 @@ class Window(QDialog):
         self.plotActiveProfile()
         self.graphRpm.setXRange(0, self.activeProfile['time'][-1])
         self.graphProfile.setXRange(0, self.activeProfile['time'][-1])
+
+    def testTypeApply(self):
+        testType = self.testTypeCombo.currentText()
+        if testType == "RPM":
+            self.graphRpm.setTitle('E-RPM / 1000')
+        else:
+            self.graphRpm.setTitle('Vibration')
 
     def plotActiveProfile(self):
         x = self.activeProfile['time']
@@ -234,24 +241,13 @@ class Window(QDialog):
         if self.serialThread.isConnected:
             return
         selectedItem = 0
-
         available_ports = self.serialThread.getAvailablePortsList()
-        displayed_ports = [self.comportCombo.itemText(i) for i in range(self.comportCombo.count())]
-        # TODO: fix switching back (only add or remove)
-
-        if set(available_ports) == set(displayed_ports):
-            print('Ports OK')
-            return
-
         self.comportCombo.clear()
         for i, port in enumerate(available_ports):
             self.comportCombo.addItem(port)
-
-            #if 'modem' in port:
-            #    selectedItem = i
-
+            if 'modem' in port:
+                selectedItem = i
         self.comportCombo.setCurrentIndex(selectedItem)
-
 
     def plotTimeout(self):
         if self.plotAutoUpdateEnabled:
