@@ -48,7 +48,7 @@ class Window(QDialog):
         settings.setValue("comport", self.comportCombo.currentText())
         settings.setValue("profile", self.profileCombo.currentText())
         settings.setValue("type", self.testTypeCombo.currentText())
-        settings.setValue("parallel", self.radioSimultaneous.isChecked())
+        settings.setValue("parallel", int(self.radioSimultaneous.isChecked()))
         m = [ch.isChecked() for ch in self.radioMotor].index(True)
         settings.setValue("motor", m)
         print("Settings saved")
@@ -95,7 +95,7 @@ class Window(QDialog):
         self.profileCombo.addItems(self.profiles.keys())
         self.radioOneByOne = QRadioButton('One-by-one')
         self.radioSimultaneous = QRadioButton('Simultaneous')
-        self.radioSimultaneous.setChecked(True)
+        self.radioOneByOne.setChecked(True)
         profileGrid.setSpacing(18)
         profileGrid.addWidget(self.profileCombo)
         profileGrid.addWidget(self.radioOneByOne)
@@ -173,6 +173,7 @@ class Window(QDialog):
 
     def testTypeApply(self):
         testType = self.testTypeCombo.currentText()
+        self.clearAllLogs()
         if testType == "RPM":
             self.graphRpm.setTitle('E-RPM / 1000')
         else:
