@@ -24,6 +24,40 @@ class State(enum.Enum):
     FINISHED = 4
 
 
+class Performance:
+
+    log = None
+
+    def __init__(self, num_records):
+        self.reset(num_records)
+
+    def tic(self, func_id, enabled=True):
+        if not enabled:
+            return
+        self.time_tic[func_id] = time.perf_counter()
+
+    def toc(self, func_id, enabled=True):
+        if not enabled:
+            return
+        time_toc = time.perf_counter()
+        res = time_toc - self.time_tic[func_id]
+        if self.pointer[func_id] < len(self.log):
+            self.log[self.pointer[func_id], func_id] = res * 1000
+            self.pointer[func_id] += 1
+
+    def reset(self, num_records, num_func=2):
+        self.log = np.zeros((num_records, num_func))
+        self.time_tic = np.zeros((num_func, ))
+        self.pointer = [0] * num_func
+
+    def output(self):
+        for i in range(len(self.log)):
+            t = self.log[i, :]
+            if t[0] == 0:
+                break
+            print('{0:.0f}\t{1:.0f}'.format(t[0], t[1]))
+
+
 class LoggerRPM:
     def __init__(self):
         self.rmpLog = []
@@ -72,6 +106,7 @@ class SerialThread(QThread):
 
     def __init__(self):
         QThread.__init__(self)
+        self.perf = Performance(500)
         self.rpmLogger = LoggerRPM()
 
     def connectToPort(self, portName):
