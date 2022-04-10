@@ -38,6 +38,8 @@ Small useful Python scripts:
 
 * **photo_tools** - Search and rename tools.
 
+* **pilots_age** - Plot age distribution histograms.
+
 * **sound_timer** - Create long audio files with certain sound marks.
 
 * **students_list** - One-time project.
