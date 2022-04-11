@@ -28,7 +28,7 @@ class Performance:
 
     log = None
 
-    def __init__(self, num_records):
+    def __init__(self, num_records=500):
         self.reset(num_records)
 
     def tic(self, func_id, enabled=True):
@@ -133,6 +133,7 @@ class SerialThread(QThread):
         while True:
             if self.isRunning:
                 self.guiUpdateSignal.emit(State.RUNNING)
+                self.perf = Performance()
 
                 motors = self.motorList
                 for mot in motors:
@@ -156,6 +157,7 @@ class SerialThread(QThread):
                         if currentTime > timeProfile[-1]:
                             break
                     self.sendMotorValue(motors, 950, self.type)
+                    self.perf.output()
 
                 self.isRunning = False
 
@@ -170,14 +172,17 @@ class SerialThread(QThread):
         for m in motorIdx:
             packet[m * 2] = value % 256
             packet[m * 2 + 1] = value // 256
-
+        self.perf.tic(0)
         self.mspSend(Msp.MSP_SET_MOTOR, packet)
+        self.perf.toc(0)
+        self.perf.tic(1)
         if testType == 'RPM':
             motorTelemetry = self.mspSend(Msp.MSP_MOTOR_TELEMETRY, [])
             response = self.decodeRpm(motorTelemetry)
         else:  # Vibro
             imuTelemetry = self.mspSend(Msp.MSP_RAW_IMU, [])
             response = self.decodeImu(imuTelemetry)
+        self.perf.toc(1)
         return response
 
     def mspSend(self, code, data):
