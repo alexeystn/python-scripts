@@ -28,19 +28,21 @@ def apply_actual_rates(command, rates):
     angle_rate = com * center + stick_movement * expo_factor
     return angle_rate
 
-rc_range = np.linspace(-1,1,100)
+length = 100
+rc_range = np.linspace(-1,1,length*2-1)
 
-# rate_bf = apply_betaflight_rates(rc_range, [0.6, 0.7, 0.0])
-# rate_act = apply_actual_rates(rc_range, [120, 400, 0.5])
-
-rate_bf = apply_betaflight_rates(rc_range, [0.6, 0.55, 0.0])
-rate_act = apply_actual_rates(rc_range, [120, 300, 0.5])
+if 1:
+    rate_bf = apply_betaflight_rates(rc_range, [0.6, 0.7, 0.0])
+    rate_act = apply_actual_rates(rc_range, [120, 400, 0.5])
+else:
+    rate_bf = apply_betaflight_rates(rc_range, [0.6, 0.55, 0.0])
+    rate_act = apply_actual_rates(rc_range, [120, 300, 0.5])
 
 ratio = rate_act / rate_bf
 print('{0:.1f}% - {1:.1f}%'.format(min(ratio)*100, max(ratio)*100))
 
-plt.plot( rc_range, rate_bf )
-plt.plot( rc_range, rate_act )
+plt.plot( rc_range[-length:], rate_bf[-length:] )
+plt.plot( rc_range[-length:], rate_act[-length:] )
 
 plt.grid(True)
 plt.show()
