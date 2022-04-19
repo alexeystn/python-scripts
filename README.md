@@ -44,6 +44,8 @@ Small useful Python scripts:
 
 * **students_list** - One-time project.
 
+* **vtx_channels** - Find optimal channels combination in Lowband+Raceband
+
 * **xiaomi_yi_remote** - Control Xiaomi Yi camera via TCP.
 
 * **xml_to_csv** - One-time project.
