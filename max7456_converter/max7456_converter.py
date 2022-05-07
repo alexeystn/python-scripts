@@ -55,7 +55,7 @@ class Font:
             for cn in range(256):
                 for y in range(18):
                     for x1 in range(3):
-                        line = self.symbols[cn,y,x1*4:(x1+1)*4]
+                        line = self.symbols[cn, y, x1*4:(x1+1)*4]
                         s = ''
                         for px in line:
                             if px == 255:
@@ -73,35 +73,24 @@ class Font:
 
     def add_logo(self, filename):
         input_logo = cv2.imread(filename)
-        dn = 10 * 16  # logo starts from 10th row
-
         for yl in range(4):
             for xl in range(24):
                 char_logo = input_logo[yl*18:(yl+1)*18, xl*12:(xl+1)*12, :]
                 char_logo = np.mean(char_logo, axis=2)
                 char_logo[(char_logo > 0) & (char_logo < 255)] = 127
-                n = 10 * 16 + yl * 24 + xl
+                n = 10 * 16 + yl * 24 + xl   # logo starts from 10th row
                 self.symbols[n] = char_logo
         self.update_image()
 
     def show(self):
         self.update_image()
-        cv2.imshow(font.image)
+        cv2.imshow('Font', font.image)
         cv2.waitKey(0)
 
 
 font = Font()
 
-#font.load_from_mcm('default_blblbl.mcm')
-#cv2.imshow('Font', font.image)
-#font.save_to_mcm('default_blblbl_re.mcm')
-#cv2.waitKey(0)
-
-font.load_from_png('bold_blblbl.png')
-font.add_logo('logo.bmp')
-
-
-cv2.imshow('Font', font.image)
-cv2.waitKey(0)
-
-print('OK')
+font.load_from_png('source/default_ovp.png')
+font.add_logo('source/logo.bmp')
+font.save_to_mcm('default_ovp.mcm')
+font.show()
