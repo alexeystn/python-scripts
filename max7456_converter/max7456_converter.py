@@ -69,7 +69,7 @@ class Font:
                     f.write('\n' + '01010101')
 
     def save_to_png(self, filename):
-        cv2.imwrite(self.image, filename)
+        cv2.imwrite(filename, self.image)
 
     def add_logo(self, filename):
         input_logo = cv2.imread(filename)
@@ -90,7 +90,12 @@ class Font:
 
 font = Font()
 
-font.load_from_png('source/default_ovp.png')
+#name = 'default'
+name = 'bold'
+
+font.load_from_png('source/' + name + '_ovp.png')
 font.add_logo('source/logo.bmp')
-font.save_to_mcm('default_ovp.mcm')
+font.save_to_mcm(name + '_ovp.mcm')
+font.save_to_png(name + '_ovp.png')
+
 font.show()
