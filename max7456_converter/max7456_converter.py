@@ -82,6 +82,13 @@ class Font:
                 self.symbols[n] = char_logo
         self.update_image()
 
+    def add_battery(self, filename):
+        battery = cv2.imread(filename)
+        for n in range(7):
+            char_logo = battery[0:18, n*13:n*13+12, 0]
+            self.symbols[n+9*16] = char_logo
+        self.update_image()
+        
     def show(self):
         self.update_image()
         cv2.imshow('Font', font.image)
@@ -95,7 +102,8 @@ name = 'bold'
 
 font.load_from_png('source/' + name + '_ovp.png')
 font.add_logo('source/logo.bmp')
-font.save_to_mcm(name + '_ovp.mcm')
-font.save_to_png(name + '_ovp.png')
+font.add_battery('voltage_indicator/drink.png')
+font.save_to_mcm(name + '_ovp_gl.mcm')
+font.save_to_png(name + '_ovp_gl.png')
 
 font.show()
