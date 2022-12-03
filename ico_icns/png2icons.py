@@ -1,11 +1,14 @@
 from PIL import Image
 import os
 
-filename_png = 'drawing.png'
+filename_png = 'tiny_bb.png'
+output_path = '../../tiny-blackbox/Software/resources/'
+
 filename = filename_png.split(sep='.')[0]
 
 sizes = [16, 32, 128, 256, 512]
 image = Image.open(filename_png)
+
 
 if 1:  # macOS
     output_dir = filename + '.iconset'
@@ -19,4 +22,13 @@ if 1:  # macOS
     os.system('iconutil --convert icns --output {0}.icns {1}'.format(filename, output_dir))
 
 if 1:  # Windows ico
-    image.save('tiny_bb.ico', sizes=[(a, a) for a in sizes])
+    image.save(filename + '.ico', sizes=[(a, a) for a in sizes])
+
+if 1:  # remove temp files:
+    for f in os.listdir(filename + '.iconset'):
+        os.remove(filename + '.iconset/' + f)
+    os.rmdir(filename + '.iconset')
+
+if 1:  # move to output directory
+    for ext in ['.ico', '.icns']:
+        os.rename(filename + ext, output_path + filename + ext)
