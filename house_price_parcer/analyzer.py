@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 
 class Database:
 
-    filename = 'database_copy.db'
+    filename = 'database.db'
     timestamp_margin = 300
 
     def __init__(self):
@@ -96,6 +96,7 @@ for prj in db.get_project_names():
         plt.plot(timestamps, prices, '-d')
 
 plt.legend(legend)
+plt.savefig('output.png')
 plt.show()
         
 
