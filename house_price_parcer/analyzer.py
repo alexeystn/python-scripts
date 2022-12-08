@@ -104,7 +104,7 @@ plt.xlabel('День')
 plt.ylabel('Изменение, %')
 plt.ylim([-8, 4])
 plt.grid(True)
-plt.title(datetime.now().strftime('%Y-%m-%d  %H:%m:%S'))
+plt.title(datetime.now().strftime('%Y-%m-%d  %H:%M:%S'))
 
 plt.legend(legend, loc='lower center', ncol=2)
 plt.savefig('output/output.png', dpi=300)
