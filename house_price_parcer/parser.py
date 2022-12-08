@@ -94,3 +94,5 @@ for pr in projects:
     pairs = p.get_id_price_pairs()
     db.write(pr, pairs)
     p.archive()
+
+import analyzer
