@@ -80,7 +80,7 @@ def load_project_list():
     with open('projects.json', 'r') as f:
         data = json.load(f)
         print(data)
-        return data
+        return list(data.keys())
 
 
 db = Database()

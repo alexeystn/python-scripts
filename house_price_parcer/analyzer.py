@@ -1,6 +1,9 @@
 from datetime import datetime
 import sqlite3
+import json
 import numpy as np
+import matplotlib
+from datetime import datetime
 from matplotlib import pyplot as plt
 
 class Database:
@@ -70,21 +73,23 @@ class Database:
         prices = np.array([r[0] for r in res])
         timestamps = np.array([r[1] for r in res])
         return prices, timestamps
-        
-            
 
+     
 db = Database()
 timestamps, labels = db.get_timestamps()
 t0 = timestamps[0]
-# print(timestamps)
+
+with open('projects.json', 'r') as f:
+    project_names = json.load(f)
 
 counts = db.get_number_of_projects_in_sessions(timestamps)
 for label, count in zip(labels, counts):
     print(label, '-', count)
 
 legend = []
+cmap = matplotlib.cm.get_cmap('tab10')
 
-for prj in db.get_project_names():
+for p, prj in enumerate(db.get_project_names()):
     print(prj)
     flat_ids = db.get_most_exposed_flats(prj)
     for flat_id in flat_ids:
@@ -92,19 +97,15 @@ for prj in db.get_project_names():
         timestamps = (timestamps - t0)/3600/24
         
         prices = (prices/prices[0] - 1) * 100
-        legend.append((prj + ' ' + str(flat_id)))
-        plt.plot(timestamps, prices, '-d')
+        legend.append('{0} ({1})'.format(project_names[prj], flat_id))
+        plt.plot(timestamps, prices, '.-', color=cmap(p))
 
-plt.legend(legend)
-plt.savefig('output.png')
+plt.xlabel('День')
+plt.ylabel('Изменение, %')
+plt.ylim([-8, 4])
+plt.grid(True)
+plt.title(datetime.now().strftime('%Y-%m-%d  %H:%m:%S'))
+
+plt.legend(legend, loc='lower center', ncol=2)
+plt.savefig('output/output.png', dpi=300)
 plt.show()
-        
-
-
-
-
-
-
-
-
-
