@@ -108,4 +108,26 @@ plt.title(datetime.now().strftime('%Y-%m-%d  %H:%M:%S'))
 
 plt.legend(legend, loc='lower center', ncol=2)
 plt.savefig('output/output.png', dpi=300)
+
+fig, ax = plt.subplots()
+legend = []
+
+with open('favourites.json', 'r') as f:
+    favourites = json.load(f)
+
+for i, favourite in enumerate(favourites):    
+    prices, timestamps = db.get_price_change(favourite['id'])
+    timestamps = (timestamps - t0)/3600/24
+    prices = prices / 1000
+
+    legend.append('{0} ({1})'.format(favourite['comment'],favourite['id']))
+    plt.plot(timestamps, prices, '.-', color=cmap(i))
+
+plt.legend(legend, loc='lower left')
+plt.xlabel('День')
+plt.ylabel('Цена, тыс.руб.')
+plt.grid(True)
+plt.title(datetime.now().strftime('%Y-%m-%d  %H:%M:%S'))
+plt.savefig('output/favourites.png', dpi=300)
+
 plt.show()
