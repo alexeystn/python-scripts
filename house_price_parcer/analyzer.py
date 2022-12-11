@@ -3,7 +3,7 @@ import sqlite3
 import json
 import numpy as np
 import matplotlib
-from datetime import datetime
+from datetime import datetime, timedelta
 from matplotlib import pyplot as plt
 
 class Database:
@@ -83,14 +83,16 @@ with open('projects.json', 'r') as f:
     project_names = json.load(f)
 
 counts = db.get_number_of_projects_in_sessions(timestamps)
-for label, count in zip(labels, counts):
-    print(label, '-', count)
+#for label, count in zip(labels, counts):
+#    print(label, '-', count)
 
 legend = []
 cmap = matplotlib.cm.get_cmap('tab10')
 
+fig1, ax1 = plt.subplots()
+
 for p, prj in enumerate(db.get_project_names()):
-    print(prj)
+    #print(prj)
     flat_ids = db.get_most_exposed_flats(prj)
     for flat_id in flat_ids:
         prices, timestamps = db.get_price_change(flat_id)
@@ -102,14 +104,14 @@ for p, prj in enumerate(db.get_project_names()):
 
 plt.xlabel('День')
 plt.ylabel('Изменение, %')
-plt.ylim([-8, 4])
+plt.ylim([-10, 4])
 plt.grid(True)
 plt.title(datetime.now().strftime('%Y-%m-%d  %H:%M:%S'))
 
 plt.legend(legend, loc='lower center', ncol=2)
 plt.savefig('output/output.png', dpi=300)
 
-fig, ax = plt.subplots()
+fig2, ax2 = plt.subplots()
 legend = []
 
 with open('favourites.json', 'r') as f:
@@ -124,10 +126,23 @@ for i, favourite in enumerate(favourites):
     plt.plot(timestamps, prices, '.-', color=cmap(i))
 
 plt.legend(legend, loc='lower left')
-plt.xlabel('День')
+#plt.xlabel('День')
 plt.ylabel('Цена, тыс.руб.')
 plt.grid(True)
 plt.title(datetime.now().strftime('%Y-%m-%d  %H:%M:%S'))
+
 plt.savefig('output/favourites.png', dpi=300)
 
+for ax in [ax1, ax2]:
+    labels = [item.get_text() for item in ax.get_xticklabels()]
+    labels_int = [int(s.replace('−', '-')) for s in labels]
+    t0_datetime = datetime.fromtimestamp(t0)
+    labels_dt = [t0_datetime + timedelta(days=d) for d in labels_int]
+    labels_txt = [dt.strftime('%d %b') for dt in labels_dt]
+    print(labels_txt)
+    ax.set_xticklabels(labels_txt)
+
+fig1.savefig('output/output.png', dpi=300)
+fig2.savefig('output/favourites.png', dpi=300)
 plt.show()
+
