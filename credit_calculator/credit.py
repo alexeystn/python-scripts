@@ -55,13 +55,27 @@ def format_sum(s):
     return res
 
 
-total = 6000e3
-monthly = 80e3
-inf = 9
+full_price = 9.2e6
+first_payment = 2.4e6 + 1.0e6
+monthly = 70e3 
+term = 30*12  # months
+inflation = 7.5  # percents, yearly
+discount = 0.0  # part, next year
+
+
+total_credit = full_price - first_payment
+print( format_sum(full_price/1000), '->', format_sum(full_price*(1-discount)/1000))
 
 rate = 6.5
-m, paid = get_months_count_progressive(total, rate, monthly, inf)
-over = paid - total
+m, paid = get_months_count_progressive(total_credit, rate, monthly, inflation)
 print('2022:', format_months(m, text=False), 'years')
-print('Monthly:', format_sum(get_monthly_payment(total, rate, 30*12)))
-print('Over:', format_sum(over))
+print('Monthly:', format_sum(get_monthly_payment(total_credit, rate, term)))
+
+total_credit -= full_price*discount
+
+rate = 7.5
+m, paid = get_months_count_progressive(total_credit, rate, monthly, inflation)
+print('2023:', format_months(m, text=False), 'years')
+print('Monthly:', format_sum(get_monthly_payment(total_credit, rate, term)))
+
+
