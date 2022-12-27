@@ -24,14 +24,19 @@ def get_months_count_progressive(total_sum, rate_percents, monthly_payment, infl
     M = (1 + inflation_rate / 100) ** (1/12)
     months = 0
     paid = 0
+    remaining_part = []
     while S > x:
+        if months % 12 == 0:
+            remaining_part.append( round(S / total_sum, 3) )
         S -= x
         paid += x
         S *= P
         x *= M
         months += 1
     months += S / x
-    return months, paid
+    paid += S
+    print(remaining_part)
+    return months, paid, remaining_part
 
 
 def format_months(months_count, text=True):
@@ -57,7 +62,7 @@ def format_sum(s):
 
 full_price = 9.2e6
 first_payment = 2.4e6 + 1.0e6
-monthly = 70e3 
+monthly = 80e3 
 term = 30*12  # months
 inflation = 7.5  # percents, yearly
 discount = 0.0  # part, next year
@@ -66,16 +71,16 @@ discount = 0.0  # part, next year
 total_credit = full_price - first_payment
 print( format_sum(full_price/1000), '->', format_sum(full_price*(1-discount)/1000))
 
-rate = 6.5
-m, paid = get_months_count_progressive(total_credit, rate, monthly, inflation)
+rate = 6.2
+m, paid, rem = get_months_count_progressive(total_credit, rate, monthly, inflation)
 print('2022:', format_months(m, text=False), 'years')
 print('Monthly:', format_sum(get_monthly_payment(total_credit, rate, term)))
+print('Over:', format_sum(paid - total_credit))
 
 total_credit -= full_price*discount
 
-rate = 7.5
-m, paid = get_months_count_progressive(total_credit, rate, monthly, inflation)
+rate = 7.2
+m, paid, rem = get_months_count_progressive(total_credit, rate, monthly, inflation)
 print('2023:', format_months(m, text=False), 'years')
 print('Monthly:', format_sum(get_monthly_payment(total_credit, rate, term)))
-
-
+print('Over:', format_sum(paid - total_credit))
