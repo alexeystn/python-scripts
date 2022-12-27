@@ -86,7 +86,7 @@ class DataBase:
 
     def print_operation(self, r, print_sub=False):
         amount = int(r[0])
-        description = r[1]
+        description = r[1].replace('\n', '  ')
         date = datetime.fromtimestamp(r[2] / 1000)
         sub_cat = self.category_name_by_id(r[3]) if print_sub else ''
         print(' ' * 15 + '{0}-{1:02d}-{2:02d} {3:6d}  {4} {5}'.format(date.year, date.month, date.day,
@@ -114,8 +114,27 @@ class DataBase:
                 for r in res:
                     self.print_operation(r)
 
+    def find_mention(self, substrings, limit=100):
+        def lower_py(s):
+            return str(s).lower()
+        if type(substrings) is str:
+            substrings = [substrings]
+        self.connection.create_function('lower', 1, lower_py)
+        q = "SELECT summa, opis, date, id_podCat FROM rashodi "
+        q += " WHERE lower(opis) LIKE '%{0}%'".format(lower_py(substrings[0]))
+        if len(substrings) > 1:
+            for substring in substrings[1:]:
+                q += " OR lower(opis) LIKE '%{0}%'".format(lower_py(substring))
+        q += " ORDER BY date"
+        q += " LIMIT {0}".format(limit)
+        res = self.cursor.execute(q).fetchall()
+        return res
+
 
 db = DataBase('backup.db')
 # db.print_categories(1)
-db.print_report('Еда', (2022, 1), (2022, 12), details=True, print_sub=True)
+# db.print_report('Еда', (2022, 1), (2022, 12), details=True, print_sub=True)
 # db.print_structure((2022, 1), details=0)
+ops = db.find_mention(['перчат'])
+for op in ops:
+    db.print_operation(op)
