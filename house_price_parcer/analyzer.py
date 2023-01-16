@@ -90,6 +90,7 @@ legend = []
 cmap = matplotlib.cm.get_cmap('tab10')
 
 fig1, ax1 = plt.subplots()
+fig1.set_size_inches([16, 4.8])
 
 for p, prj in enumerate(db.get_project_names()):
     #print(prj)
@@ -105,6 +106,7 @@ for p, prj in enumerate(db.get_project_names()):
 plt.xlabel('День')
 plt.ylabel('Изменение, %')
 plt.ylim([-10, 4])
+plt.xticks(np.arange(0, 50, 2), rotation=45)
 plt.grid(True)
 plt.title(datetime.now().strftime('%Y-%m-%d  %H:%M:%S'))
 
@@ -112,6 +114,7 @@ plt.legend(legend, loc='lower center', ncol=2)
 plt.savefig('output/output.png', dpi=300)
 
 fig2, ax2 = plt.subplots()
+fig2.set_size_inches([16, 4.8])
 legend = []
 
 with open('favourites.json', 'r') as f:
@@ -128,10 +131,11 @@ for i, favourite in enumerate(favourites):
 plt.legend(legend, loc='lower left')
 #plt.xlabel('День')
 plt.ylabel('Цена, тыс.руб.')
+plt.xticks(np.arange(0, 50, 2), rotation=45)
 plt.grid(True)
 plt.title(datetime.now().strftime('%Y-%m-%d  %H:%M:%S'))
 
-plt.savefig('output/favourites.png', dpi=300)
+plt.savefig('output/favourites.png', dpi=300)  #render figure before set_xtick
 
 for ax in [ax1, ax2]:
     labels = [item.get_text() for item in ax.get_xticklabels()]
