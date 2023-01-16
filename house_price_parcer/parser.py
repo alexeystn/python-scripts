@@ -43,9 +43,9 @@ class Parser:
     project = ''
 
     def download_html(self):
-        url = 'https://www.pik.ru/search/{0}'.format(self.project) +\
+        url = 'https://old.pik.ru/search/{0}'.format(self.project) +\
               '?rooms=1,2&areaFrom=35&sortBy=price'
-        command = 'curl "{0}" -o {1}'.format(url, self.filename)
+        command = 'curl "{0}" -o {1} -k'.format(url, self.filename)
         print(command)
         os.system(command)
 
