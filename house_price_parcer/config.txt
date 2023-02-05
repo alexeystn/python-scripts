@@ -1,0 +1,5 @@
+crontab -e
+
+0 */6 * * * /root/parser/run.sh
+
+sudo service cron reload
