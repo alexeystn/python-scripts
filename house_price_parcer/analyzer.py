@@ -105,8 +105,8 @@ for p, prj in enumerate(db.get_project_names()):
 
 plt.xlabel('День')
 plt.ylabel('Изменение, %')
-plt.ylim([-10, 4])
-plt.xticks(np.arange(0, 50, 2), rotation=45)
+plt.ylim([-12, 4])
+plt.xticks(np.arange(0, 100, 2), rotation=45)
 plt.grid(True)
 plt.title(datetime.now().strftime('%Y-%m-%d  %H:%M:%S'))
 
@@ -131,7 +131,7 @@ for i, favourite in enumerate(favourites):
 plt.legend(legend, loc='lower left')
 #plt.xlabel('День')
 plt.ylabel('Цена, тыс.руб.')
-plt.xticks(np.arange(0, 50, 2), rotation=45)
+plt.xticks(np.arange(0, 100, 2), rotation=45)
 plt.grid(True)
 plt.title(datetime.now().strftime('%Y-%m-%d  %H:%M:%S'))
 
