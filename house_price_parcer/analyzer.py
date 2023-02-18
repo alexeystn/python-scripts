@@ -57,7 +57,7 @@ class Database:
         WHERE project='{0}'
         GROUP BY flat_id
         ORDER BY COUNT(flat_id) DESC
-        LIMIT 3;
+        LIMIT 2;
         """.format(project)
         res = self.cursor.execute(q).fetchall()
         return [r[0] for r in res]
@@ -101,16 +101,19 @@ for p, prj in enumerate(db.get_project_names()):
         
         prices = (prices/prices[0] - 1) * 100
         legend.append('{0} ({1})'.format(project_names[prj], flat_id))
-        plt.plot(timestamps, prices, '.-', color=cmap(p))
+        plt.plot(timestamps, prices, '.-', color=cmap(p),
+                 linewidth=1.5, markersize=3)
 
 plt.xlabel('День')
 plt.ylabel('Изменение, %')
-plt.ylim([-12, 4])
+plt.ylim([-6, 8])
+_, _, ymin, ymax = plt.axis()
+plt.yticks(np.arange(ymin, ymax+1))
 plt.xticks(np.arange(0, 100, 2), rotation=45)
 plt.grid(True)
 plt.title(datetime.now().strftime('%Y-%m-%d  %H:%M:%S'))
 
-plt.legend(legend, loc='lower center', ncol=2)
+plt.legend(legend, loc='upper left', ncol=2)
 plt.savefig('output/output.png', dpi=300)
 
 fig2, ax2 = plt.subplots()
@@ -126,9 +129,10 @@ for i, favourite in enumerate(favourites):
     prices = prices / 1000
 
     legend.append('{0} ({1})'.format(favourite['comment'],favourite['id']))
-    plt.plot(timestamps, prices, '.-', color=cmap(i))
+    plt.plot(timestamps, prices, '.-', color=cmap(i),
+             linewidth=1.5, markersize=3)
 
-plt.legend(legend, loc='lower left')
+plt.legend(legend, loc='lower right')
 #plt.xlabel('День')
 plt.ylabel('Цена, тыс.руб.')
 plt.xticks(np.arange(0, 100, 2), rotation=45)
@@ -143,7 +147,6 @@ for ax in [ax1, ax2]:
     t0_datetime = datetime.fromtimestamp(t0)
     labels_dt = [t0_datetime + timedelta(days=d) for d in labels_int]
     labels_txt = [dt.strftime('%d %b') for dt in labels_dt]
-    print(labels_txt)
     ax.set_xticklabels(labels_txt)
 
 fig1.savefig('output/output.png', dpi=300)
