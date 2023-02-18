@@ -70,7 +70,9 @@ for prj in project_names.keys():
 plt.grid(True)
 plt.xlabel('Days')
 plt.ylabel('Change, %')
-plt.ylim(-6, 3)
+plt.ylim(-6, 6)
+xmin, xmax, ymin, ymax = plt.axis()
+plt.yticks(np.arange(ymin, ymax+1))
 plt.legend(project_names.values())
 
 plt.xticks(timeline[::7],
@@ -78,4 +80,5 @@ plt.xticks(timeline[::7],
             for dt in timeline[::7]],
            rotation=45)
 
+fig.savefig('output/trends.png', dpi=300)
 plt.show()
