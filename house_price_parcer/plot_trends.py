@@ -70,7 +70,7 @@ for prj in project_names.keys():
 plt.grid(True)
 plt.xlabel('Days')
 plt.ylabel('Change, %')
-plt.ylim(-6, 6)
+plt.ylim(-6, 10)
 xmin, xmax, ymin, ymax = plt.axis()
 plt.yticks(np.arange(ymin, ymax+1))
 plt.legend(project_names.values())

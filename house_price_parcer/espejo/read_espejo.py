@@ -55,7 +55,7 @@ for x in x_centers:
 
 
 for k in flats.keys():
-    print('{0:>6s}: {1}'.format(k, flats[k]))
+    print('{0:>10s}: {1}'.format(k, flats[k]))
 
 cv2.imshow('pik', img)
 cv2.setMouseCallback('pik', click)

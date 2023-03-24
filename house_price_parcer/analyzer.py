@@ -78,6 +78,7 @@ class Database:
 db = Database()
 timestamps, labels = db.get_timestamps()
 t0 = timestamps[0]
+days_count = int((timestamps[-1]-timestamps[0])/24/3600) + 2
 
 with open('projects.json', 'r') as f:
     project_names = json.load(f)
@@ -106,10 +107,10 @@ for p, prj in enumerate(db.get_project_names()):
 
 plt.xlabel('День')
 plt.ylabel('Изменение, %')
-plt.ylim([-6, 8])
+plt.ylim([-8, 12])
 _, _, ymin, ymax = plt.axis()
 plt.yticks(np.arange(ymin, ymax+1))
-plt.xticks(np.arange(0, 100, 2), rotation=45)
+plt.xticks(np.arange(0, days_count, 2), rotation=45)
 plt.grid(True)
 plt.title(datetime.now().strftime('%Y-%m-%d  %H:%M:%S'))
 
@@ -135,7 +136,7 @@ for i, favourite in enumerate(favourites):
 plt.legend(legend, loc='lower right')
 #plt.xlabel('День')
 plt.ylabel('Цена, тыс.руб.')
-plt.xticks(np.arange(0, 100, 2), rotation=45)
+plt.xticks(np.arange(0, days_count, 2), rotation=45)
 plt.grid(True)
 plt.title(datetime.now().strftime('%Y-%m-%d  %H:%M:%S'))
 
