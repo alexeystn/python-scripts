@@ -57,8 +57,8 @@ class Parser:
 
         id_price_pairs = []
 
-        p_price = re.compile('от \d \d{3} \d{3}')
-        p_id = re.compile('data-id="\d{6}"')
+        p_price = re.compile(r'от \d{1,2} \d{3} \d{3}')
+        p_id = re.compile(r'data-id="\d{6}"')
 
         for m_id, m_price in zip(p_id.finditer(line), p_price.finditer(line)):
             int_id = int(m_id.group()[9:-1])
@@ -95,4 +95,3 @@ for pr in projects:
     db.write(pr, pairs)
     p.archive()
 
-import analyzer
