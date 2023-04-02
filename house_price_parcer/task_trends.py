@@ -1,13 +1,11 @@
 from datetime import datetime
-import sqlite3
 import json
 import numpy as np
 from matplotlib import pyplot as plt
+import pik_database
 
 # Load database
-filename = 'database.db'
-conn = sqlite3.connect(filename)
-cursor = conn.cursor()
+db = pik_database.Database()
 
 # Smoothing filter
 fir_length = 5
@@ -33,18 +31,12 @@ fig, ax = plt.subplots()
 for prj in project_names.keys():
 
     # Get full list of all flats
-    q = "SELECT DISTINCT flat_id FROM flats WHERE project = '{0}'".format(prj)
-    flat_ids = np.array(cursor.execute(q).fetchall())
-    flat_ids = np.sort(flat_ids, axis=0).flatten()
+
+    flat_ids = db.get_flat_id_list(prj)
 
     for flat_id in flat_ids:
 
-        q = """SELECT timestamp, price FROM flats
-               WHERE flat_id = {0}""".format(flat_id)
-        res = cursor.execute(q).fetchall()
-        res = np.array(res, dtype='int')
-        time_real = res[:, 0]
-        price_real = res[:, 1]
+        time_real, price_real = db.get_price_and_ts(flat_id)
         price_interp = np.interp(timeline, time_real, price_real)
         # Get daily relative price change:
         price_interp_diff = price_interp[1:] / price_interp[:-1] - 1
@@ -70,9 +62,9 @@ for prj in project_names.keys():
 plt.grid(True)
 plt.xlabel('Days')
 plt.ylabel('Change, %')
-plt.ylim(-6, 10)
+plt.ylim(-10, 20)
 xmin, xmax, ymin, ymax = plt.axis()
-plt.yticks(np.arange(ymin, ymax+1))
+plt.yticks(np.arange(ymin, ymax+1, 2))
 plt.legend(project_names.values())
 
 plt.xticks(timeline[::7],
