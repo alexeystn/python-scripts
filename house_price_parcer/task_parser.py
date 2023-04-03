@@ -1,18 +1,15 @@
+import json
 import pik_parser
 import pik_database
 
-p = pik_parser.Parser()
 db = pik_database.Database()
 
-projects = pik_parser.load_project_list()
-
-filename = 'temp.html'
+with open('projects.json', 'r') as f:
+    projects = json.load(f)
 
 for project in projects:
-    p.download_html(project)
-    pairs = p.get_id_price_pairs()
+    pairs = pik_parser.download_id_price_pairs(project, archive_enabled=True)
     for price, flat_id in pairs:
-        db.write(project, price, flat_id)
-    p.put_to_archive(project)
+        db.write(project['url'], price, flat_id)
 
 db.save_changes()

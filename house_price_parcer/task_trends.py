@@ -8,12 +8,13 @@ import pik_database
 db = pik_database.Database()
 
 # Smoothing filter
-fir_length = 5
+fir_length = 7
 fir = np.cos((np.linspace(-1, 1, fir_length)*np.pi))/2 + 0.5
 fir /= np.sum(fir)
 
 with open('projects.json', 'r') as f:
-    project_names = json.load(f)
+    projects = json.load(f)
+project_names = {p['url']: p['name'] for p in projects}
 
 # Prepare X-axis
 timeline_start = datetime.timestamp(datetime(2022, 12, 2))

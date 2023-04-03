@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import requests
 from datetime import datetime
 
 
@@ -10,6 +11,47 @@ def load_project_list():
         print('Loaded projects:')
         print(data)
     return list(data.keys())
+
+
+def download_id_price_pairs(project, archive_enabled=False):
+
+    url = 'https://api-selectel.pik-service.ru/v2/filter'
+    params = {'block': project['id'],
+              'areaFrom': 35,
+              'flatPage': 1,
+              'flatLimit': 50,
+              'onlyFlats': 1,
+              'sortBy': 'price'}
+    url += '?' + '&'.join(k + '=' + str(params[k]) for k in params)
+    response = requests.get(url)
+
+    print(project['name'])
+    id_price_pairs = []
+    for flat in json.loads(response.content)['blocks'][0]['flats']:
+        print(flat['id'], flat['price'])
+        id_price_pairs.append((flat['id'], flat['price']))
+
+    if archive_enabled:
+        filename = './archive/'
+        filename += datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename += '_' + project['url'] + '.html'
+        with open(filename, 'wb') as f:
+            f.write(response.content)
+
+    return id_price_pairs
+
+
+def download_project_list():
+
+    url = 'https://api.pik.ru/v2/filter?sort=blocks&onlyBlocks=1'
+    response = requests.get(url)
+
+    project_list = []
+    for project in json.loads(response.content):
+        project_list.append({'id': project['id'],
+                             'name': project['name'],
+                             'url': project['url']})
+    return project_list
 
 
 class Parser:

@@ -12,7 +12,8 @@ t0 = timestamps[0]
 days_count = int((timestamps[-1]-timestamps[0])/24/3600) + 2
 
 with open('projects.json', 'r') as f:
-    project_names = json.load(f)
+    projects = json.load(f)
+project_names = {p['url']: p['name'] for p in projects}
 
 counts = db.get_number_of_projects_in_sessions(timestamps)
 
