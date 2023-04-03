@@ -34,7 +34,7 @@ def download_id_price_pairs(project, archive_enabled=False):
     if archive_enabled:
         filename = './archive/'
         filename += datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename += '_' + project['url'] + '.html'
+        filename += '_' + project['url'] + '.json'
         with open(filename, 'wb') as f:
             f.write(response.content)
 
