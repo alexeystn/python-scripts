@@ -22,33 +22,48 @@ class Box:
     txt_color_normal = [255, 255, 255]
     txt_color_unused = [150, 150, 150]
 
-    def generate_boxes(self, start):
+    default_box_width = 8
+    penta_box_width = 15
+
+    def generate_boxes(self, start, pentatonic=False):
         result = []
         notes = self.notes * 4
         pos = notes.index(self.gamma[start])
+        if pentatonic:
+            box_width = self.penta_box_width
+        else:
+            box_width = self.default_box_width
         for i in range(6):
             start %= 7
             stop = (start + 2) % 7
-            part = notes[pos:pos+7]
+            part = notes[pos:pos+box_width]
             start_index = part.index(self.gamma[start])
             stop_index = part.index(self.gamma[stop])
-            result.append((part, (start_index, stop_index)))
+            if pentatonic:
+                result.append((part, (0, box_width-1)))
+            else:
+                result.append((part, (start_index, stop_index)))
             pos += 5
             if i == 3:
                 pos -= 1
             start += 3
         return result
 
-    def draw_box(self, box, show=False):
+    def draw_box(self, box, pentatonic=False, show=False):
 
-        img = np.ones((self.height*7, self.width*8, 3), dtype='uint8') * 255
+        if pentatonic:
+            box_width = self.penta_box_width
+        else:
+            box_width = self.default_box_width
+
+        img = np.ones((self.height*7, self.width*box_width, 3), dtype='uint8') * 255
 
         for i in range(6):
             y = (6 - i) * self.height
-            cv2.line(img, (0, y), (self.width*8, y), [0, 0, 0], self.line_thickness)
+            cv2.line(img, (0, y), (self.width*box_width, y), [0, 0, 0], self.line_thickness)
 
             start, stop = box[i][1]
-            for j in range(7):
+            for j in range(box_width-1):
                 x = (j + 1) * self.width
                 txt = box[i][0][j]
                 scale = self.scale
@@ -59,7 +74,12 @@ class Box:
                 txt_color = self.txt_color_unused
                 bg_color = self.bg_color_unused
                 if start <= j <= stop:
-                    if not txt.endswith('#'):
+                    highlight = False
+                    if pentatonic and txt in 'ACDEG':
+                        highlight = True
+                    if not pentatonic and not txt.endswith('#'):
+                        highlight = True
+                    if highlight:
                         txt_color = self.txt_color_normal
                         bg_color = self.bg_color_normal
                     if txt == 'A':
@@ -75,7 +95,7 @@ class Box:
 
                 cv2.circle(img, (x, y), self.radius, [0, 0, 0], self.line_thickness)
 
-        for i in range(8):
+        for i in range(box_width+1):
             cv2.line(img, (self.width//2 + self.width*i, self.height//2),
                      (self.width // 2 + self.width * i, self.height // 2 + self.height * 6),
                      [0, 0, 0], self.line_thickness)
@@ -90,7 +110,7 @@ class Box:
     def draw_all_boxes(self):
 
         h = self.height * 7
-        w = self.width * 8
+        w = self.width * self.default_box_width
         m = self.margin
 
         img = np.ones((5*m+4*h, 3*m+w*2, 3), dtype='uint8')
@@ -102,9 +122,25 @@ class Box:
             y = m + (m + h) * (i // 2)
             img[y:y+h, x:x+w, :] = img_bx
 
-        cv2.imwrite('img.png', img)
+        cv2.imwrite('boxes.png', img)
         return
 
+    def draw_pentatonics(self):
+
+        h = self.height * 7
+        w = self.width * self.penta_box_width
+        m = self.margin
+
+        img = np.ones((2*m+h, 2*m+w, 3), dtype='uint8') * 255
+
+        bx = self.generate_boxes(4, pentatonic=True)
+        img_bx = self.draw_box(bx, pentatonic=True)
+        img[m:m+h, m:m+w, :] = img_bx
+        
+        cv2.imwrite('penta.png', img)
+        return
+        
 
 b = Box()
+b.draw_pentatonics()
 b.draw_all_boxes()
