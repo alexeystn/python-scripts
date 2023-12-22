@@ -38,3 +38,4 @@ my_lib.so
 house_price_parcer/archive/*.html
 *.db
 api_key.txt
+data.txt
