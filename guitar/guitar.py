@@ -6,6 +6,7 @@ class Box:
 
     notes = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
     gamma = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+    notes_b = ['A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab']
     height = 120
     width = 200
     radius = 50
@@ -162,7 +163,61 @@ class Box:
         cv2.imwrite('penta.png', img)
         return
         
+    def draw_circle_of_fifths(self):
+
+        margin = 80
+        radius_internal = 250
+        radius_external = 620
+        radius_middle = 410
+        center = radius_external + margin
+        color = [0, 0, 0]
+        w = radius_external*2 + margin*2
+        img = np.ones((w, w, 3), dtype='uint8') * 255
+        font = cv2.FONT_HERSHEY_DUPLEX
+        scale = 4.0
+        font_thickness = 6
+        minor_scale = 2
+        line_thickness = font_thickness
+        radius_major = int((radius_external + radius_middle) / 2)
+        radius_minor = int((radius_internal + radius_middle) / 2)
+        cv2.circle(img, (center, center), radius_external, color, line_thickness)
+        cv2.circle(img, (center, center), radius_middle, color, line_thickness)
+        cv2.circle(img, (center, center), radius_internal, color, line_thickness)
+
+        for i in range(12):
+            t = np.pi * ( (0.5 + i) / 6)
+            sin = np.sin(t)
+            cos = np.cos(t)
+            p0 = (center + int(radius_internal * sin),
+                  center + int(radius_internal * cos))
+            p1 = (center + int(radius_external * sin),
+                  center + int(radius_external * cos))            
+            cv2.line(img, p0, p1, color, line_thickness)
+        
+        for i in range(12):
+            sin = np.sin(np.pi * (i / 6))
+            cos = np.cos(np.pi * (i / 6))
+            p = (center + int(radius_major * cos),
+                  center + int(radius_major * sin))
+            txt = self.notes_b[(i*7) % 12]
+            centers = cv2.getTextSize(txt, self.font, scale, font_thickness)[0]    
+            cv2.putText(img, txt, (p[0] - centers[0]//2, p[1] + centers[1]//2),
+                        self.font, scale, color, font_thickness)
+            p = (center + int(radius_minor * cos),
+                  center + int(radius_minor * sin))
+            if i < 3:
+                txt = self.notes[(i*7 - 3) % 12] + 'm'
+            else:
+                txt = self.notes_b[(i*7 - 3) % 12] + 'm'
+            centers = cv2.getTextSize(txt, self.font, int(scale/minor_scale),
+                                      int(font_thickness / minor_scale))[0]
+            cv2.putText(img, txt, (p[0] - centers[0]//2, p[1] + centers[1]//2),
+                        self.font, scale/minor_scale, color, int(font_thickness / minor_scale))
+                        
+        cv2.imwrite('circle.png', img)
+
 
 b = Box()
 b.draw_pentatonics()
 b.draw_all_boxes()
+b.draw_circle_of_fifths()
