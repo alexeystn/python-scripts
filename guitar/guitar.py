@@ -13,14 +13,21 @@ class Box:
     scale = 2.4
     font_thickness = 6
     line_thickness = 4
+    point_size = 10
     margin = 150
 
-    bg_color_minor = [255, 30, 30]
-    bg_color_major = [0, 0, 230]
-    bg_color_normal = [100, 100, 100]
-    bg_color_unused = [250, 250, 250]
-    txt_color_normal = [255, 255, 255]
+    bg_color = [0, 50, 100]
+    bg_color_minor = [255, 255, 255]
+    bg_color_major = [255, 255, 255]
+    bg_color_normal = [255, 255, 255]
+    bg_color_unused = [0, 0, 0]
+    txt_color_minor = [0, 0, 0]
+    txt_color_major = [0, 0, 0]
+    txt_color_normal = [0, 0, 0]
     txt_color_unused = [150, 150, 150]
+    string_color = [180, 180, 180]
+    fret_color = [50, 160, 200]
+    point_color = [200, 200, 200]
 
     default_box_width = 8
     penta_box_width = 15
@@ -56,11 +63,29 @@ class Box:
         else:
             box_width = self.default_box_width
 
-        img = np.ones((self.height*7, self.width*box_width, 3), dtype='uint8') * 255
+        img = np.zeros((self.height*7, self.width*box_width, 3), dtype='uint8')
+        img[:, :] = self.bg_color
 
+        last_string = box[0][0]
+        for i in range(box_width+1):
+            cv2.line(img, (self.width//2 + self.width*i, self.height//2),
+                     (self.width // 2 + self.width * i, self.height // 2 + self.height * 6),
+                     self.fret_color, self.line_thickness*2)
+            y = int(6.75 * self.height)
+            x = (i + 1) * self.width
+            if i < len(last_string) - 1:
+                if last_string[i] in ['G', 'A', 'B', 'C#']:
+                    cv2.circle(img, (x, y), self.point_size, self.point_color, -1)
+                if last_string[i] == 'E':
+                    cv2.circle(img, (x - self.point_size * 2, y),
+                               self.point_size, self.point_color, -1)
+                    cv2.circle(img, (x + self.point_size * 2, y),
+                               self.point_size, self.point_color, -1)
+        
         for i in range(6):
             y = (6 - i) * self.height
-            cv2.line(img, (0, y), (self.width*box_width, y), [0, 0, 0], self.line_thickness)
+            cv2.line(img, (0, y), (self.width*box_width, y), self.string_color,
+                     self.line_thickness)
 
             start, stop = box[i][1]
             for j in range(box_width-1):
@@ -84,8 +109,10 @@ class Box:
                         bg_color = self.bg_color_normal
                     if txt == 'A':
                         bg_color = self.bg_color_minor
+                        txt_color = self.txt_color_minor
                     elif txt == 'C':
                         bg_color = self.bg_color_major
+                        txt_color = self.txt_color_major
 
                 cv2.circle(img, (x, y), self.radius, bg_color, -1)
                 centers = cv2.getTextSize(txt, self.font, scale, font_thickness)[0]
@@ -94,11 +121,6 @@ class Box:
                             self.font, scale, txt_color, font_thickness)
 
                 cv2.circle(img, (x, y), self.radius, [0, 0, 0], self.line_thickness)
-
-        for i in range(box_width+1):
-            cv2.line(img, (self.width//2 + self.width*i, self.height//2),
-                     (self.width // 2 + self.width * i, self.height // 2 + self.height * 6),
-                     [0, 0, 0], self.line_thickness)
 
         if show:
             cv2.imshow('img', img)
