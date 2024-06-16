@@ -41,8 +41,8 @@ height = int(vcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 fps = int(round(vcap.get(cv2.CAP_PROP_FPS)))
 frame_count = int(vcap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-width_out = 640
-height_out = 480
+width_out = 1280#640
+height_out = 720#480
 
 left_cursor = -1
 right_cursor = frame_count
@@ -83,7 +83,7 @@ def compress_video(filename, wavefile, compress=True):
                      '-i', filename,
                      '-i', wavefile,
                      new_filename]
-    bitrate = 2000
+    bitrate = 4000
     if compress:
         ffmpeg_params.insert(5, '-c:v libx264')
         ffmpeg_params.insert(6, '-b:v {0}k'.format(bitrate))
