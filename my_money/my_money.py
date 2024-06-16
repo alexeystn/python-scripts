@@ -48,6 +48,10 @@ class DataBase:
             q += " WHERE id_podCat = {0}".format(self.expense_categories[category]['id'])
         else:
             q += " WHERE id_cat = {0}".format(self.expense_categories[category]['id'])
+        #if self.income_categories[category]['sub']:
+        #    q += " WHERE id_podCat = {0}".format(self.income_categories[category]['id'])
+        #else:
+        #    q += " WHERE id_cat = {0}".format(self.income_categories[category]['id'])
         q += " AND strftime('%Y', date(date/1000,'unixepoch')) IN('{0}')".format(year)
         q += " AND strftime('%m', date(date/1000,'unixepoch')) IN('{0:02d}')".format(month)
         q += " ORDER BY date"
@@ -80,6 +84,8 @@ class DataBase:
         ret = ''
         for cat in self.expense_categories:
             if self.expense_categories[cat]['id'] == id_:
+        #for cat in self.income_categories:
+        #    if self.income_categories[cat]['id'] == id_:
                 ret = cat
                 break
         return ret
@@ -132,9 +138,6 @@ class DataBase:
 
 
 db = DataBase('backup.db')
-# db.print_categories(1)
-# db.print_report('Еда', (2022, 1), (2022, 12), details=True, print_sub=True)
-# db.print_structure((2022, 1), details=0)
-ops = db.find_mention(['перчат'])
-for op in ops:
-    db.print_operation(op)
+db.print_categories(1)
+db.print_report(db.category_name_by_id(32), (2021, 1), (2021, 12), details=True)
+
