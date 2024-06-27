@@ -40,3 +40,5 @@ house_price_parcer/archive/*.html
 api_key.txt
 data.txt
 rotor_hazard/*.json
+laps.txt
+teams.txt
