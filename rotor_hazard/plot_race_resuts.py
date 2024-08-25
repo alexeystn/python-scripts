@@ -21,7 +21,7 @@ def recursive_print(js, tab):
 
 
 def to_datetime(s):
-    dt = datetime.datetime.strptime(s, "%Y-%m-%d %H:%M:%S.%f")
+    dt = datetime.datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
     return dt
 
 
@@ -49,10 +49,13 @@ for heat in ['1', '2']:
         nodes = rnd['nodes']
         for node in nodes:
             pilot = node['callsign']
+            if not pilot:
+                continue
             for lap in node['laps'][1:]:
-                lap_time = float(lap['lap_time']) / 1000
-                lap_time_stamp = rnd_time_stamp + float(lap['lap_time_stamp']) / 1000
+                
                 if not lap['deleted']:  # and lap_time > lap_time_threshold:
+                    lap_time = float(lap['lap_time']) / 1000
+                    lap_time_stamp = rnd_time_stamp + float(lap['lap_time_stamp']) / 1000
                     result[pilot]['x'].append(lap_time_stamp)
                     result[pilot]['y'].append(lap_time)
 
