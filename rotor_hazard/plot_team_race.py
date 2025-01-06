@@ -4,6 +4,7 @@ import numpy as np
 
 # Conversion: '1:05:00' -> 75
 def str_to_int(s):
+    return float(s)
     if ':' in s:
         s = [int(s) for s in s.split(':')]
         return s[0] * 60 + s[1]
@@ -11,7 +12,7 @@ def str_to_int(s):
         return 0
 
 
-lap_change = 50
+lap_change = 25  # 25 or 50
 
 # Load lap times
 lap_times = [[] for i in range(4)]
@@ -20,8 +21,8 @@ with open('laps.txt', 'r') as f:
         line = line[:-1].split('\t')
         for i in range(4):
             t = str_to_int(line[i])
-            if t:
-                lap_times[i].append(t)
+            #if t:
+            lap_times[i].append(t)
 
 # Load team names
 teams = []
@@ -39,7 +40,7 @@ mid_x = np.linspace(lap_times[0][0], winner_time, total_laps + 1)
 y = [np.arange(len(xi)) - np.interp(xi, mid_x, mid_y) for xi in lap_times]
 x = lap_times
 
-# Draw results
+# Draw results 1
 plt.figure(figsize=(8, 5))
 colors = ['r', 'y', 'g', 'b']
 for i in range(4):  # Lines
@@ -53,5 +54,26 @@ plt.legend(teams)
 plt.xlabel('Seconds')
 plt.ylabel('Laps')
 plt.grid(True)
-plt.savefig('output.png')
+plt.savefig('output1.png')
 plt.show()
+
+
+y = [np.diff(yi) for yi in lap_times]
+x = np.arange(len(y[0]))+1
+
+# Draw results 2
+plt.figure(figsize=(8, 5))
+colors = ['r', 'y', 'g', 'b']
+for i in range(4):  # Lines
+    plt.plot(x, y[i], color=colors[i])
+plt.legend(teams)
+plt.xlabel('Seconds')
+plt.ylabel('Laps')
+plt.grid(True)
+plt.savefig('output2.png')
+plt.show()
+
+
+
+
+
